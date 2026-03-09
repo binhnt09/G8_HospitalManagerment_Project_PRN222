@@ -25,7 +25,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
             return View(await dbHospitalManagementContext.ToListAsync());
         }
 
-        // GET: Payments/Details/5
+        // GET: Payments/Details/5 123
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
