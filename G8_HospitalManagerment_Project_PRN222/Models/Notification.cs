@@ -1,0 +1,33 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace G8_HospitalManagerment_Project_PRN222.Models;
+
+public partial class Notification
+{
+    public int NotificationId { get; set; }
+
+    public int UserId { get; set; }
+
+    public string Title { get; set; } = null!;
+
+    public string Message { get; set; } = null!;
+
+    public string? NotificationType { get; set; }
+
+    public int? ReferenceId { get; set; }
+
+    public bool? IsRead { get; set; }
+
+    public DateTime? ReadAt { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public DateTime? DeletedAt { get; set; }
+
+    public bool? IsDeleted { get; set; }
+
+    public virtual User User { get; set; } = null!;
+}

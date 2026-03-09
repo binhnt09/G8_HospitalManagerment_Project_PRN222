@@ -1,0 +1,65 @@
+﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.LabResult>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ResultValue)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsAbnormal)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Remarks)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ResultDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderItem)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PerformedByNavigation)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ResultValue)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsAbnormal)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Remarks)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ResultDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.OrderItem.OrderItemId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PerformedByNavigation.EmployeeId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ResultId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ResultId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ResultId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
