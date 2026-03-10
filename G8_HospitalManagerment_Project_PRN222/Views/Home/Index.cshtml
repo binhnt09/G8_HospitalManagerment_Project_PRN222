@@ -2,7 +2,193 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+
+
+    <!-- Hero Section -->
+    <div class="position-relative text-white text-center d-flex align-items-center justify-content-center"
+         style="height:500px; background:linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)),
+url('https://images.unsplash.com/photo-1758691463331-2ac00e6f676f') center/cover no-repeat;">
+
+        <div>
+            <h1 class="display-4 fw-bold mb-3">
+                Chào mừng đến với ChildCare Center
+            </h1>
+
+            <p class="lead mb-4">
+                Chăm sóc sức khỏe toàn diện cho con yêu của bạn
+            </p>
+
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+
+                <a href="/services" class="btn btn-primary btn-lg">
+                    Khám phá dịch vụ
+                </a>
+
+                <a href="/reservation" class="btn btn-outline-light btn-lg">
+                    Đặt lịch hẹn
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <section class="py-5 bg-light">
+        <div class="container">
+
+            <h2 class="text-center fw-bold mb-5">
+                Vì sao chọn chúng tôi?
+            </h2>
+
+            <div class="row g-4 text-center">
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Chăm sóc tận tâm</h5>
+                            <p class="card-text text-muted">
+                                Đội ngũ y bác sĩ giàu kinh nghiệm, yêu trẻ
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Tiện lợi 24/7</h5>
+                            <p class="card-text text-muted">
+                                Đặt lịch online, theo dõi sức khỏe mọi lúc
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Đội ngũ chuyên nghiệp</h5>
+                            <p class="card-text text-muted">
+                                Bác sĩ chuyên khoa nhi, y tá tận tình
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Chất lượng hàng đầu</h5>
+                            <p class="card-text text-muted">
+                                Được tin tưởng bởi hàng nghìn gia đình
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Services -->
+    <section class="py-5">
+        <div class="container">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Dịch vụ nổi bật</h2>
+
+                <a href="/services" class="btn btn-outline-primary">
+                    Xem tất cả
+                </a>
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+
+                        <img src="service1.jpg" class="card-img-top" alt="service">
+
+                        <div class="card-body">
+
+                            <small class="text-primary">Khám tổng quát</small>
+
+                            <h5 class="card-title mt-2">
+                                Khám sức khỏe định kỳ
+                            </h5>
+
+                            <p class="card-text text-muted">
+                                Kiểm tra sức khỏe toàn diện cho trẻ em.
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <span class="fw-bold text-primary">
+                                    200.000 VNĐ
+                                </span>
+
+                                <a href="/services/1" class="btn btn-sm btn-primary">
+                                    Chi tiết
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Blogs -->
+    <section class="py-5 bg-light">
+        <div class="container">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <h2 class="fw-bold">
+                    Bài viết mới nhất
+                </h2>
+
+                <a href="/blogs" class="btn btn-outline-primary">
+                    Xem tất cả
+                </a>
+
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+
+                        <img src="blog1.jpg" class="card-img-top">
+
+                        <div class="card-body">
+
+                            <small class="text-primary">Sức khỏe</small>
+
+                            <h5 class="card-title mt-2">
+                                Cách chăm sóc trẻ khi bị sốt
+                            </h5>
+
+                            <p class="card-text text-muted">
+                                Một số lưu ý quan trọng khi trẻ bị sốt.
+                            </p>
+
+                            <div class="d-flex justify-content-between text-muted">
+
+                                <span>Bác sĩ Minh</span>
+
+                                <a href="/blogs/1" class="btn btn-sm btn-outline-primary">
+                                    Đọc thêm
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
