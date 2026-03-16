@@ -9,6 +9,9 @@ public partial class Authentication
 
     public int UserId { get; set; }
 
+
+
+
     public string? Password { get; set; }
 
     public string? AuthType { get; set; }
