@@ -1,0 +1,187 @@
+﻿@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.RegisterViewModel 
+@{
+    var mode = ViewBag.Mode ?? "login";
+    ViewData["Title"] = (mode == "register") ? "Tham gia MomCare" : "Chào mừng trở lại";
+    Layout = null;
+}
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-blue: #0077b6;
+            --secondary-cyan: #00b4d8;
+        }
+
+        body {
+            background: linear-gradient(135deg, #023e8a 0%, #00b4d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 15px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: @(mode == "register" ? "800px" : "450px"); /* Tự động giãn rộng khi đăng ký */
+            transition: max-width 0.4s ease;
+            overflow: hidden;
+        }
+
+        .tab-header {
+            display: flex;
+            background: #f8fbff;
+            border-bottom: 1px solid #e1f5fe;
+        }
+
+        .tab-link {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            color: #90a4ae;
+            transition: 0.3s;
+        }
+
+            .tab-link.active {
+                color: var(--primary-blue);
+                background: white;
+                border-bottom: 3px solid var(--primary-blue);
+            }
+
+        .form-container {
+            padding: 35px;
+        }
+
+        .input-group-text {
+            background: none;
+            border-right: none;
+            color: var(--primary-blue);
+        }
+
+        .form-control, .form-select {
+            border-left: none;
+            background: #fdfdfd;
+        }
+
+        .btn-submit {
+            background: linear-gradient(to right, var(--primary-blue), var(--secondary-cyan));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+            .btn-submit:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 15px rgba(0, 180, 216, 0.3);
+                color: white;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="tab-header">
+            <a href="?mode=login" class="tab-link @(mode == "login" ? "active" : "")">ĐĂNG NHẬP</a>
+            <a href="?mode=register" class="tab-link @(mode == "register" ? "active" : "")">ĐĂNG KÝ</a>
+        </div>
+
+        <div class="form-container">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary"><i class="fas fa-hand-holding-heart"></i> MomCare</h2>
+            </div>
+
+            @if (mode == "login")
+            {
+                <form method="post" asp-action="Login">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" placeholder="example@gmail.com" />
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-submit w-100">ĐĂNG NHẬP NGAY</button>
+                </form>
+            }
+            else
+            {
+                <form method="post" asp-action="Register">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Họ (Last Name)</label>
+                            <input asp-for="LastName" class="form-control" placeholder="Nguyễn" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Tên (First Name)</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="Văn A" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Email</label>
+                            <input asp-for="Email" type="email" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Mật khẩu</label>
+                            <input asp-for="Password" type="password" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Xác nhận mật khẩu</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Số điện thoại</label>
+                            <input asp-for="Phone" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Giới tính</label>
+                            <select asp-for="Gender" class="form-select">
+                                <option value="Nữ">Nữ</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Ngày sinh</label>
+                            <input asp-for="BirthDay" type="date" class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Địa chỉ</label>
+                            <input asp-for="Address" class="form-control" placeholder="Số nhà, tên đường..." />
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-submit w-100 py-3">TẠO TÀI KHOẢN</button>
+                        </div>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+
+</body>
+</html>

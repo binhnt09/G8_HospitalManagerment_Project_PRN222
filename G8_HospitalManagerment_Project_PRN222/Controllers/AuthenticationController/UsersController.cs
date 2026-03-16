@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
@@ -51,22 +52,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             return View();
         }
 
-        // POST: Users/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("UserId,FirstName,LastName,Email,Phone,Gender,BirthDay,Address,UserRoleId,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] User user)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["UserRoleId"] = new SelectList(_context.UserRoles, "UserRoleId", "UserRoleId", user.UserRoleId);
-            return View(user);
-        }
+        // Đăng Kí
+        
 
         // GET: Users/Edit/5
         public async Task<IActionResult> Edit(int? id)
