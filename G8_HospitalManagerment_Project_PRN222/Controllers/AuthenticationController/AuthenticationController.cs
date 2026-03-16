@@ -17,7 +17,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [HttpGet]
         public IActionResult Index(string mode = "login")
         {
-            // Truyền mode sang View qua ViewBag để hiển thị đúng Form 121312312
+            // Truyền mode sang View qua ViewBag để hiển thị đúng Form 121312312cbashchachdsajkcsdkj
             ViewBag.Mode = mode;
             return View(new RegisterViewModel());
         }

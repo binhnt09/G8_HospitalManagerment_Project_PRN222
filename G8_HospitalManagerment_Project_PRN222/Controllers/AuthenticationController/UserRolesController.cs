@@ -18,7 +18,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             _context = context;
         }
 
-        // GET: UserRoles
+        // GET: UserRoles 
         public async Task<IActionResult> Index()
         {
             return View(await _context.UserRoles.ToListAsync());
