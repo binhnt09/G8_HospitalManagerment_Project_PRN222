@@ -20,10 +20,75 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         _context = context;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string searchString, string sortOrder, int? pageNumber)
     {
-        var appointments = await _service.GetAllAsync();
-        return View(appointments);
+        // 1. Giữ trạng thái của thanh tìm kiếm và sắp xếp để truyền lại View
+        ViewBag.CurrentSort = sortOrder;
+        ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+        ViewBag.CurrentFilter = searchString;
+
+        // 2. Query cơ sở kết nối các bảng
+        var appointments = _context.Appointments
+            .Include(a => a.Department)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.Employee)
+                    .ThenInclude(e => e.User)
+            .Include(a => a.Patient)
+                .ThenInclude(p => p.User)
+            .AsQueryable();
+
+        // 3. Tính toán dữ liệu cho 4 thẻ Thống kê (Summary Cards) ở cuối trang
+        ViewBag.TotalAppointments = await appointments.CountAsync();
+        ViewBag.CompletedCount = await appointments.CountAsync(a => a.Status == "Completed");
+        ViewBag.ScheduledCount = await appointments.CountAsync(a => a.Status == "Scheduled");
+        ViewBag.ActiveCount = await appointments.CountAsync(a => a.IsDeleted == false);
+
+        // 4. Xử lý Tìm kiếm (Search)
+        if (!String.IsNullOrEmpty(searchString))
+        {
+            searchString = searchString.ToLower();
+            appointments = appointments.Where(a =>
+                (a.Reason != null && a.Reason.ToLower().Contains(searchString)) ||
+                (a.Doctor != null && a.Doctor.Employee != null && a.Doctor.Employee.User != null && (a.Doctor.Employee.User.FirstName + " " + a.Doctor.Employee.User.LastName).ToLower().Contains(searchString)) ||
+                (a.Patient != null && a.Patient.User != null && (a.Patient.User.FirstName + " " + a.Patient.User.LastName).ToLower().Contains(searchString)));
+        }
+
+        // 5. Xử lý Sắp xếp (Sort)
+        switch (sortOrder)
+        {
+            case "date_desc":
+                appointments = appointments.OrderByDescending(a => a.AppointmentDate);
+                break;
+            case "doctor_asc":
+                appointments = appointments.OrderBy(a => a.Doctor.Employee.User.FirstName).ThenBy(a => a.Doctor.Employee.User.LastName);
+                break;
+            case "status_asc":
+                appointments = appointments.OrderBy(a => a.Status);
+                break;
+            default: // Mặc định sắp xếp ngày tăng dần
+                appointments = appointments.OrderBy(a => a.AppointmentDate);
+                break;
+        }
+
+        // 6. Xử lý Phân trang (Pagination)
+        int pageSize = 6; // Số lượng record trên mỗi trang giống trong ảnh
+        int pageIndex = pageNumber ?? 1;
+        int totalItems = await appointments.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        ViewBag.CurrentPage = pageIndex;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.ItemStart = (pageIndex - 1) * pageSize + 1;
+        ViewBag.ItemEnd = Math.Min(pageIndex * pageSize, totalItems);
+
+        // Lấy dữ liệu của trang hiện tại
+        var pagedData = await appointments
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return View(pagedData);
     }
 
     public async Task<IActionResult> Details(int? id)

@@ -33,6 +33,26 @@ public class AppointmentService
         await _repo.UpdateAsync(appointment);
     }
 
+    public async Task<List<Appointment>> GetPagedAsync(string searchString, string sortOrder, int pageNumber, int pageSize)
+    {
+        return await _repo.GetPagedAsync(searchString, sortOrder, pageNumber, pageSize);
+    }
+
+    public async Task<int> GetTotalCountAsync()
+    {
+        return await _repo.GetTotalCountAsync();
+    }
+
+    public async Task<int> GetCountByStatusAsync(string status)
+    {
+        return await _repo.GetCountByStatusAsync(status);
+    }
+
+    public async Task<int> GetActiveCountAsync()
+    {
+        return await _repo.GetActiveCountAsync();
+    }
+
     public async Task DeleteAsync(int id)
     {
         await _repo.DeleteAsync(id);
