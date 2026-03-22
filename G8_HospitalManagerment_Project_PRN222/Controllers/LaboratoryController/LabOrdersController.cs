@@ -19,10 +19,66 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
         }
 
         // GET: LabOrders
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int? pageNumber)
         {
-            var dbHospitalManagementContext = _context.LabOrders.Include(l => l.Doctor).Include(l => l.MedicalRecord).Include(l => l.Patient);
-            return View(await dbHospitalManagementContext.ToListAsync());
+            // 1. Giữ trạng thái của thanh tìm kiếm và sắp xếp để truyền lại View
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.CurrentFilter = searchString;
+
+            // 2. Query cơ sở kết nối các bảng
+            var labOrders = _context.LabOrders
+                .Include(l => l.Doctor)
+                .Include(l => l.MedicalRecord)
+                .Include(l => l.Patient)
+                .AsQueryable();
+
+            // 3. Tính toán dữ liệu cho 4 thẻ Thống kê (Summary Cards) ở cuối trang
+            ViewBag.TotalOrders = await labOrders.CountAsync();
+            ViewBag.CompletedCount = await labOrders.CountAsync(l => l.Status == "Completed");
+            ViewBag.PendingCount = await labOrders.CountAsync(l => l.Status == "Pending");
+            ViewBag.ActiveCount = await labOrders.CountAsync(l => l.IsDeleted == false);
+
+            // 4. Xử lý Tìm kiếm (Search)
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                labOrders = labOrders.Where(l =>
+                    l.Reason.ToLower().Contains(searchString) ||
+                    l.Doctor.DoctorId.ToString().Contains(searchString) ||
+                    l.Patient.PatientId.ToString().Contains(searchString));
+            }
+
+            // 5. Xử lý Sắp xếp (Sort)
+            switch (sortOrder)
+            {
+                case "date_desc":
+                    labOrders = labOrders.OrderByDescending(l => l.OrderDate);
+                    break;
+                default: // Mặc định sắp xếp ngày tăng dần
+                    labOrders = labOrders.OrderBy(l => l.OrderDate);
+                    break;
+            }
+
+            // 6. Xử lý Phân trang (Pagination)
+            int pageSize = 6; // Số lượng record trên mỗi trang giống trong ảnh
+            int pageIndex = pageNumber ?? 1;
+            int totalItems = await labOrders.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            ViewBag.CurrentPage = pageIndex;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.ItemStart = (pageIndex - 1) * pageSize + 1;
+            ViewBag.ItemEnd = Math.Min(pageIndex * pageSize, totalItems);
+
+            // Lấy dữ liệu của trang hiện tại
+            var pagedData = await labOrders
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return View(pagedData);
         }
 
         // GET: LabOrders/Details/5
