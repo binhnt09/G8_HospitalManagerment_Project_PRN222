@@ -1,193 +1,221 @@
-﻿﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@{
+    ViewData["Title"] = "Trang chủ - ChildCare Center";
 }
 
-
-
-    <!-- Hero Section -->
-    <div class="position-relative text-white text-center d-flex align-items-center justify-content-center"
-         style="height:500px; background:linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)),
-url('https://images.unsplash.com/photo-1758691463331-2ac00e6f676f') center/cover no-repeat;">
-
-        <div>
-            <h1 class="display-4 fw-bold mb-3">
-                Chào mừng đến với ChildCare Center
-            </h1>
-
-            <p class="lead mb-4">
-                Chăm sóc sức khỏe toàn diện cho con yêu của bạn
-            </p>
-
-            <div class="d-flex gap-3 justify-content-center flex-wrap">
-
-                <a href="/services" class="btn btn-primary btn-lg">
-                    Khám phá dịch vụ
-                </a>
-
-                <a href="/reservation" class="btn btn-outline-light btn-lg">
-                    Đặt lịch hẹn
-                </a>
-
+<section class="hero-wrapper mb-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="badge bg-soft-blue text-medical px-3 py-2 rounded-pill mb-3 fw-bold border border-primary-subtle">
+                    <i class="bi bi-shield-plus"></i> ⭐ Trung tâm Nhi khoa Hàng đầu
+                </span>
+                <h1 class="display-4 fw-bolder text-dark mb-4" style="line-height: 1.2;">
+                    Chăm sóc sức khỏe <br> <span class="text-medical">toàn diện</span> cho con yêu
+                </h1>
+                <p class="lead text-muted mb-5 fs-5">
+                    Đội ngũ bác sĩ chuyên khoa giàu kinh nghiệm, trang thiết bị hiện đại cùng không gian thân thiện, giúp bé luôn khỏe mạnh và nụ cười luôn rạng rỡ.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="/reservation" class="btn btn-medical d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-check"></i> Đặt lịch khám ngay
+                    </a>
+                    <a href="/services" class="btn btn-outline-medical d-flex align-items-center gap-2">
+                        Tìm hiểu dịch vụ <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?w=800" alt="Doctor with child" class="img-fluid" style="border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Features -->
-    <section class="py-5 bg-light">
-        <div class="container">
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-medical fw-bold text-uppercase tracking-wider">Lợi thế của chúng tôi</h6>
+            <h2 class="fw-bold text-dark">Vì sao ba mẹ tin tưởng ChildCare?</h2>
+        </div>
 
-            <h2 class="text-center fw-bold mb-5">
-                Vì sao chọn chúng tôi?
-            </h2>
-
-            <div class="row g-4 text-center">
-
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Chăm sóc tận tâm</h5>
-                            <p class="card-text text-muted">
-                                Đội ngũ y bác sĩ giàu kinh nghiệm, yêu trẻ
-                            </p>
-                        </div>
-                    </div>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="medical-card p-4">
+                    <div class="feature-icon-box"><i class="bi bi-heart-pulse"></i></div>
+                    <h5 class="fw-bold mb-3">Tận tâm & Yêu trẻ</h5>
+                    <p class="text-muted mb-0">Đội ngũ y bác sĩ không chỉ giỏi chuyên môn mà còn thấu hiểu tâm lý trẻ nhỏ.</p>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Tiện lợi 24/7</h5>
-                            <p class="card-text text-muted">
-                                Đặt lịch online, theo dõi sức khỏe mọi lúc
-                            </p>
-                        </div>
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="medical-card p-4">
+                    <div class="feature-icon-box"><i class="bi bi-clock-history"></i></div>
+                    <h5 class="fw-bold mb-3">Hỗ trợ 24/7</h5>
+                    <p class="text-muted mb-0">Hệ thống tổng đài và đặt lịch trực tuyến hoạt động liên tục, sẵn sàng khi bạn cần.</p>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Đội ngũ chuyên nghiệp</h5>
-                            <p class="card-text text-muted">
-                                Bác sĩ chuyên khoa nhi, y tá tận tình
-                            </p>
-                        </div>
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="medical-card p-4">
+                    <div class="feature-icon-box"><i class="bi bi-hospital"></i></div>
+                    <h5 class="fw-bold mb-3">Cơ sở hiện đại</h5>
+                    <p class="text-muted mb-0">Trang thiết bị y tế tân tiến, phòng khám sạch sẽ, đạt tiêu chuẩn quốc tế.</p>
                 </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Chất lượng hàng đầu</h5>
-                            <p class="card-text text-muted">
-                                Được tin tưởng bởi hàng nghìn gia đình
-                            </p>
-                        </div>
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="medical-card p-4">
+                    <div class="feature-icon-box"><i class="bi bi-shield-check"></i></div>
+                    <h5 class="fw-bold mb-3">Quy trình chuẩn</h5>
+                    <p class="text-muted mb-0">Thăm khám nhanh chóng, chẩn đoán chính xác, phác đồ điều trị an toàn.</p>
                 </div>
-
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Featured Services -->
-    <section class="py-5">
-        <div class="container">
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold">Dịch vụ nổi bật</h2>
-
-                <a href="/services" class="btn btn-outline-primary">
-                    Xem tất cả
-                </a>
+<section class="py-5 bg-soft-blue mt-4" style="border-radius: 40px;">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="text-medical fw-bold text-uppercase">Dịch vụ y tế</h6>
+                <h2 class="fw-bold text-dark mb-0">Chuyên khoa nổi bật</h2>
             </div>
+            <a href="/services" class="btn btn-outline-medical d-none d-md-block">Xem tất cả dịch vụ</a>
+        </div>
 
-            <div class="row g-4">
-
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-
-                        <img src="service1.jpg" class="card-img-top" alt="service">
-
-                        <div class="card-body">
-
-                            <small class="text-primary">Khám tổng quát</small>
-
-                            <h5 class="card-title mt-2">
-                                Khám sức khỏe định kỳ
-                            </h5>
-
-                            <p class="card-text text-muted">
-                                Kiểm tra sức khỏe toàn diện cho trẻ em.
-                            </p>
-
-                            <div class="d-flex justify-content-between align-items-center">
-
-                                <span class="fw-bold text-primary">
-                                    200.000 VNĐ
-                                </span>
-
-                                <a href="/services/1" class="btn btn-sm btn-primary">
-                                    Chi tiết
-                                </a>
-
-                            </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="medical-card border-0">
+                    <img src="https://images.unsplash.com/photo-1584515933487-779824d29309?w=600" class="card-img-top img-rounded" alt="Service">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-light text-primary fw-medium px-2 py-1">Khám tổng quát</span>
+                            <span class="fw-bold text-success fs-5">200.000đ</span>
                         </div>
+                        <h4 class="card-title fw-bold mb-3">Khám sức khỏe định kỳ</h4>
+                        <p class="card-text text-muted mb-4">Đánh giá toàn diện sự phát triển thể chất, tư vấn dinh dưỡng và tiêm chủng cho bé.</p>
+                        <a href="/services/1" class="btn btn-light w-100 fw-semibold text-primary">Chi tiết dịch vụ</a>
                     </div>
                 </div>
-
             </div>
-        </div>
-    </section>
-
-    <!-- Blogs -->
-    <section class="py-5 bg-light">
-        <div class="container">
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-
-                <h2 class="fw-bold">
-                    Bài viết mới nhất
-                </h2>
-
-                <a href="/blogs" class="btn btn-outline-primary">
-                    Xem tất cả
-                </a>
-
-            </div>
-
-            <div class="row g-4">
-
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-
-                        <img src="blog1.jpg" class="card-img-top">
-
-                        <div class="card-body">
-
-                            <small class="text-primary">Sức khỏe</small>
-
-                            <h5 class="card-title mt-2">
-                                Cách chăm sóc trẻ khi bị sốt
-                            </h5>
-
-                            <p class="card-text text-muted">
-                                Một số lưu ý quan trọng khi trẻ bị sốt.
-                            </p>
-
-                            <div class="d-flex justify-content-between text-muted">
-
-                                <span>Bác sĩ Minh</span>
-
-                                <a href="/blogs/1" class="btn btn-sm btn-outline-primary">
-                                    Đọc thêm
-                                </a>
-
-                            </div>
+            <div class="col-md-4">
+                <div class="medical-card border-0">
+                    <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600" class="card-img-top img-rounded" alt="Service">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-light text-primary fw-medium px-2 py-1">Hô hấp nhi</span>
+                            <span class="fw-bold text-success fs-5">250.000đ</span>
                         </div>
+                        <h4 class="card-title fw-bold mb-3">Khám & Điều trị Hô hấp</h4>
+                        <p class="card-text text-muted mb-4">Điều trị các bệnh lý viêm phế quản, hen suyễn, viêm phổi thường gặp ở trẻ nhỏ.</p>
+                        <a href="/services/2" class="btn btn-light w-100 fw-semibold text-primary">Chi tiết dịch vụ</a>
                     </div>
                 </div>
-
+            </div>
+            <div class="col-md-4">
+                <div class="medical-card border-0">
+                    <img src="https://images.unsplash.com/photo-1551076805-e1869033e561?w=600" class="card-img-top img-rounded" alt="Service">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-light text-primary fw-medium px-2 py-1">Xét nghiệm</span>
+                            <span class="fw-bold text-success fs-5">Từ 150.000đ</span>
+                        </div>
+                        <h4 class="card-title fw-bold mb-3">Xét nghiệm vi chất</h4>
+                        <p class="card-text text-muted mb-4">Kiểm tra tình trạng thiếu hụt Canxi, Sắt, Kẽm, Vitamin D thông qua hệ thống Lab hiện đại.</p>
+                        <a href="/services/3" class="btn btn-light w-100 fw-semibold text-primary">Chi tiết dịch vụ</a>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+        
+        <div class="text-center mt-4 d-md-none">
+             <a href="/services" class="btn btn-outline-medical w-100">Xem tất cả dịch vụ</a>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 mb-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-medical fw-bold text-uppercase">Góc tư vấn</h6>
+            <h2 class="fw-bold text-dark">Kiến thức chăm sóc bé</h2>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card medical-card flex-row align-items-center p-3">
+                    <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=300" class="rounded-3" style="width: 140px; height: 140px; object-fit: cover;" alt="Blog">
+                    <div class="card-body py-0 pe-0">
+                        <small class="text-muted d-block mb-1"><i class="bi bi-calendar-event"></i> 20/10/2023 • BS. Nguyễn Minh</small>
+                        <h5 class="fw-bold mb-2"><a href="#" class="text-dark text-decoration-none">Cách xử lý đúng khi trẻ bị sốt cao đột ngột tại nhà</a></h5>
+                        <a href="/blogs/1" class="text-medical fw-semibold text-decoration-none small">Đọc tiếp <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card medical-card flex-row align-items-center p-3">
+                    <img src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=300" class="rounded-3" style="width: 140px; height: 140px; object-fit: cover;" alt="Blog">
+                    <div class="card-body py-0 pe-0">
+                        <small class="text-muted d-block mb-1"><i class="bi bi-calendar-event"></i> 18/10/2023 • BS. Trần Hoa</small>
+                        <h5 class="fw-bold mb-2"><a href="#" class="text-dark text-decoration-none">Thực đơn dinh dưỡng tăng sức đề kháng mùa lạnh</a></h5>
+                        <a href="/blogs/2" class="text-medical fw-semibold text-decoration-none small">Đọc tiếp <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-white">
+    <div class="container py-4">
+        <div class="row text-center g-4">
+            
+            <div class="col-6 col-md-3">
+                <div class="stat-icon bg-icon-blue mb-3">
+                    <i class="bi bi-people fs-2"></i>
+                </div>
+                <h2 class="fw-bolder mb-1 fs-1">10,000+</h2>
+                <p class="text-muted mb-0">Patients Treated</p>
+            </div>
+            
+            <div class="col-6 col-md-3">
+                <div class="stat-icon bg-icon-green mb-3">
+                    <i class="bi bi-award fs-2"></i>
+                </div>
+                <h2 class="fw-bolder mb-1 fs-1">15+</h2>
+                <p class="text-muted mb-0">Years Experience</p>
+            </div>
+            
+            <div class="col-6 col-md-3">
+                <div class="stat-icon bg-icon-purple mb-3">
+                    <i class="bi bi-lungs fs-2"></i> </div>
+                <h2 class="fw-bolder mb-1 fs-1">25+</h2>
+                <p class="text-muted mb-0">Specialist Doctors</p>
+            </div>
+            
+            <div class="col-6 col-md-3">
+                <div class="stat-icon bg-icon-red mb-3">
+                    <i class="bi bi-shield-check fs-2"></i>
+                </div>
+                <h2 class="fw-bolder mb-1 fs-1">100%</h2>
+                <p class="text-muted mb-0">Safety Standards</p>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+<section class="py-5 text-white" style="background-color: #1a56db;"> <div class="container py-5 text-center">
+        <h2 class="fw-bold mb-3 display-6">Ready to Give Your Child the Best Care?</h2>
+        <p class="fs-5 mb-5" style="color: #e0e7ff;">
+            Schedule an appointment with our expert pediatricians today
+        </p>
+        
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="/reservation" class="btn-cta-light text-decoration-none d-inline-flex align-items-center gap-2">
+                <i class="bi bi-calendar4-week"></i> Book Appointment Now
+            </a>
+            <a href="/contact" class="btn-cta-outline text-decoration-none">
+                Contact Us
+            </a>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Hospital Dashboard</title>
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/G8_HospitalManagerment_Project_PRN222.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <div class="d-flex align-items-stretch" id="wrapper">
+        
+        @{
+            // Lấy tên Controller và Action hiện tại từ URL (RouteData)
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+            var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+        }
+
+        <nav id="sidebar" class="shadow-sm position-sticky top-0 h-100">
+            <div class="sidebar-header d-flex align-items-center p-3 border-bottom" style="height: 70px;">
+                <i class="bi bi-hospital fs-3 text-primary mx-2"></i>
+                <span class="fs-5 fw-bold text-dark logo-text">G8_PRN222</span>
+            </div>
+            
+            <ul class="nav flex-column mt-3">
+                <li class="nav-item">
+                    <a class="nav-link full-reload @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item mt-3 mb-1 px-4 text-muted small fw-bold text-uppercase sidebar-text" style="font-size: 0.75rem;">
+                    Nghiệp vụ Y tế
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Patients" ? "active" : "")" asp-controller="Patients" asp-action="Index">
+                        <i class="bi bi-people"></i>
+                        <span class="sidebar-text">Bệnh nhân</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Doctors" ? "active" : "")" asp-controller="Doctors" asp-action="Index">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="sidebar-text">Bác sĩ</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "LabOrders" ? "active" : "")" asp-controller="LabOrders" asp-action="Index">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        <span class="sidebar-text">Lab Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Appointments" ? "active" : "")" asp-controller="Appointments" asp-action="Index">
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="sidebar-text">Lịch hẹn</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "MedicalRecords" ? "active" : "")" asp-controller="MedicalRecords" asp-action="Index">
+                        <i class="bi bi-journal-medical"></i>
+                        <span class="sidebar-text">Hồ sơ bệnh án</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Drugs" ? "active" : "")" asp-controller="Drugs" asp-action="Index">
+                        <i class="bi bi-capsule"></i>
+                        <span class="sidebar-text">Danh mục thuốc</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Invoices" ? "active" : "")" asp-controller="Invoices" asp-action="Index">
+                        <i class="bi bi-receipt"></i>
+                        <span class="sidebar-text">Viện phí & Hóa đơn</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Prescriptions" ? "active" : "")" asp-controller="Prescriptions" asp-action="Index">
+                        <i class="bi bi-file-earmark-medical"></i>
+                        <span class="sidebar-text">Đơn thuốc</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Tests" ? "active" : "")" asp-controller="Tests" asp-action="Index">
+                        <i class="bi bi-activity"></i>
+                        <span class="sidebar-text">Xét nghiệm</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div id="page-content-wrapper">
+            
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4" style="height: 70px;">
+                <button class="btn btn-light rounded-circle shadow-sm p-2 d-flex align-items-center justify-content-center" id="sidebarToggle" style="width: 40px; height: 40px;">
+                    <i class="bi bi-list fs-5 text-dark"></i>
+                </button>
+
+                <div class="ms-auto d-flex align-items-center">
+                    <button class="btn btn-link text-muted me-3 position-relative">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="position-absolute top-25 start-75 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" class="rounded-circle me-2 shadow-sm" width="36" height="36" alt="User">
+                            <span class="fw-medium sidebar-text">Quản trị viên</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-3">
+                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2 text-muted"></i> Hồ sơ của tôi</a></li>
+                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-gear me-2 text-muted"></i> Cài đặt</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger" asp-controller="Authentication" asp-action="Logout"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <main id="main-content" class="container-fluid p-4 flex-grow-1" style="overflow-y: auto;">
+                @RenderBody()
+            </main>
+            
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleBtn = document.getElementById("sidebarToggle");
+            const sidebar = document.getElementById("sidebar");
+
+            toggleBtn.addEventListener("click", function () {
+                // Thêm/Xóa class 'collapsed' vào thẻ nav có id 'sidebar'
+                sidebar.classList.toggle("collapsed");
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            // Lắng nghe sự kiện click vào các thẻ a trong sidebar
+            $(document).on('click', '#sidebar .nav-link', function (e) {
+            
+                // Lấy đường dẫn của menu vừa click (ví dụ: /Doctors)
+                var targetUrl = $(this).attr('href');
+                var homeUrl = $(this).hasClass('full-reload');
+            
+                // Bỏ qua nếu là link trống hoặc link đăng xuất
+                if (homeUrl || !targetUrl || targetUrl === '#' || targetUrl.includes('Logout')) return;
+
+                // 1. NGĂN CHẶN LOAD LẠI TRANG
+                e.preventDefault();
+
+                // 2. CẬP NHẬT TRẠNG THÁI ACTIVE CỦA MENU
+                $('#sidebar .nav-link').removeClass('active');
+                $(this).addClass('active');
+
+                // 3. ĐỔI URL TRÊN TRÌNH DUYỆT (Để người dùng vẫn có thể copy link gửi cho người khác)
+                window.history.pushState({ path: targetUrl }, '', targetUrl);
+
+                // 4. HIỂN THỊ ICON LOADING NHẸ NHÀNG
+                $('#main-content').html(`
+                    <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                `);
+
+                // 5. GỌI AJAX LẤY DỮ LIỆU
+                $.ajax({
+                    url: targetUrl,
+                    type: 'GET',
+                    success: function (data) {
+                        // Trích xuất đúng thẻ <main id="main-content"> từ cục HTML server trả về
+                        var newContent = $(data).find('#main-content').html();
+                    
+                        // Dán vào màn hình hiện tại
+                        $('#main-content').html(newContent);
+                    },
+                    error: function () {
+                        $('#main-content').html('<div class="alert alert-danger">Có lỗi xảy ra khi tải dữ liệu!</div>');
+                    }
+                });
+            });
+
+            // Xử lý khi người dùng bấm nút Back/Forward trên trình duyệt
+            $(window).on('popstate', function () {
+                location.reload(); // Reload lại trang để đảm bảo dữ liệu đúng
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+<style>
+    /* Trạng thái khi bị thu gọn (collapsed) */
+    #sidebar.collapsed {
+        min-width: 80px;
+        max-width: 80px;
+        text-align: center;
+    }
+
+        #sidebar.collapsed .sidebar-text,
+        #sidebar.collapsed .logo-text {
+            display: none; /* Ẩn chữ đi khi thu gọn */
+        }
+
+    /* Định dạng các nút bấm trong Sidebar */
+    #sidebar .nav-link {
+        color: #5f6368;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin: 4px 12px;
+        transition: all 0.2s;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    #sidebar.collapsed .nav-link {
+        padding: 12px 0;
+        margin: 4px 8px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Hiệu ứng khi Hover hoặc đang Active */
+    #sidebar .nav-link:hover,
+    #sidebar .nav-link.active {
+        background-color: #e8f0fe;
+        color: #1a73e8;
+    }
+
+    #sidebar .nav-link i {
+        font-size: 1.25rem;
+        margin-right: 12px;
+    }
+
+    /* Đã sửa lỗi "mar" thành margin-right: 0; */
+    #sidebar.collapsed .nav-link i {
+        margin-right: 0;
+    }
+
+/* Phần nội dung chính tự động co giãn */
+#page-content-wrapper {
+    width: 100%;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+</style>
+</html>
