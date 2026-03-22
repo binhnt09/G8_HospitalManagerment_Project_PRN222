@@ -1,50 +1,45 @@
 ﻿@model G8_HospitalManagerment_Project_PRN222.Models.LabOrder
 
 @{
-    ViewData["Title"] = "Create";
+    // ViewData["Title"] = "Create";
+    Layout = null;
 }
+<div class="px-2">
+    <h4 class="fw-bold text-primary mb-3">Create New Order</h4>
+    <hr />
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        
+        <div class="row g-3">
+            <div class="col-md-6 form-group">
+                <label asp-for="MedicalRecordId" class="control-label fw-medium mb-1"></label>
+                <select asp-for="MedicalRecordId" class ="form-select" asp-items="ViewBag.MedicalRecordId"></select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label asp-for="PatientId" class="control-label fw-medium mb-1"></label>
+                <select asp-for="PatientId" class ="form-select" asp-items="ViewBag.PatientId"></select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label asp-for="DoctorId" class="control-label fw-medium mb-1"></label>
+                <select asp-for="DoctorId" class ="form-select" asp-items="ViewBag.DoctorId"></select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label asp-for="DeletedAt" class="control-label fw-medium mb-1"></label>
+                <input asp-for="DeletedAt" class="form-control" type="date" />
+                <span asp-validation-for="DeletedAt" class="text-danger small"></span>
+            </div>
+            <div class="col-12 form-group">
+                <label asp-for="Reason" class="control-label fw-medium mb-1"></label>
+                <textarea asp-for="Reason" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Reason" class="text-danger small"></span>
+            </div>
+        </div>
 
-<h1>Create</h1>
-
-<h4>LabOrder</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="MedicalRecordId" class="control-label"></label>
-                <select asp-for="MedicalRecordId" class ="form-control" asp-items="ViewBag.MedicalRecordId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class ="form-control" asp-items="ViewBag.PatientId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorId" class="control-label"></label>
-                <select asp-for="DoctorId" class ="form-control" asp-items="ViewBag.DoctorId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="Reason" class="control-label"></label>
-                <input asp-for="Reason" class="form-control" />
-                <span asp-validation-for="Reason" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
+        <div class="form-group mt-4 text-end">
+            <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary px-4">Create Order</button>
+        </div>
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

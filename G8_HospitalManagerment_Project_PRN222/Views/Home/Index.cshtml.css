@@ -1,0 +1,144 @@
+﻿/* CSS tùy chỉnh cho phong cách Y tế Hiện đại */
+body {
+    background-color: #FAFBFC;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.text-medical {
+    color: #0D6EFD; /* Màu xanh y tế chủ đạo */
+}
+
+.bg-soft-blue {
+    background-color: #F0F7FF;
+}
+
+/* Hero Section */
+.hero-wrapper {
+    background: linear-gradient(135deg, #F0F7FF 0%, #FFFFFF 100%);
+    border-radius: 0 0 40px 40px;
+    padding: 80px 0;
+    box-shadow: 0 10px 30px rgba(13, 110, 253, 0.05);
+}
+
+/* Cards */
+.medical-card {
+    border: 1px solid #E5E9F2;
+    border-radius: 20px;
+    background: #fff;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+    .medical-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        border-color: #0D6EFD;
+    }
+
+.feature-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    background-color: #F0F7FF;
+    color: #0D6EFD;
+    margin-bottom: 20px;
+}
+
+/* Buttons */
+.btn-medical {
+    background-color: #0D6EFD;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+    .btn-medical:hover {
+        background-color: #0b5ed7;
+        color: white;
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+    }
+
+.btn-outline-medical {
+    border: 2px solid #0D6EFD;
+    color: #0D6EFD;
+    border-radius: 12px;
+    padding: 10px 26px;
+    font-weight: 600;
+}
+
+    .btn-outline-medical:hover {
+        background-color: #0D6EFD;
+        color: white;
+    }
+
+.img-rounded {
+    border-radius: 20px 20px 0 0;
+    height: 220px;
+    object-fit: cover;
+}
+/* CSS cho phần Thống kê (Stats) */
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.bg-icon-blue {
+    background-color: #EBF4FF;
+    color: #3B82F6;
+}
+
+.bg-icon-green {
+    background-color: #DCFCE7;
+    color: #22C55E;
+}
+
+.bg-icon-purple {
+    background-color: #F3E8FF;
+    color: #A855F7;
+}
+
+.bg-icon-red {
+    background-color: #FEE2E2;
+    color: #EF4444;
+}
+
+/* Nút CTA ở cuối trang */
+.btn-cta-light {
+    background-color: #fff;
+    color: #0D6EFD; /* Màu xanh y tế */
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+    .btn-cta-light:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+
+.btn-cta-outline {
+    border: 2px solid #fff;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 600;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+    .btn-cta-outline:hover {
+        background-color: #fff;
+        color: #0D6EFD;
+    }

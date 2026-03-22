@@ -62,8 +62,37 @@
                         <span class="sidebar-text">Lịch hẹn</span>
                     </a>
                 </li>
-                
-                </ul>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "MedicalRecords" ? "active" : "")" asp-controller="MedicalRecords" asp-action="Index">
+                        <i class="bi bi-journal-medical"></i>
+                        <span class="sidebar-text">Hồ sơ bệnh án</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Drugs" ? "active" : "")" asp-controller="Drugs" asp-action="Index">
+                        <i class="bi bi-capsule"></i>
+                        <span class="sidebar-text">Danh mục thuốc</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Invoices" ? "active" : "")" asp-controller="Invoices" asp-action="Index">
+                        <i class="bi bi-receipt"></i>
+                        <span class="sidebar-text">Viện phí & Hóa đơn</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Prescriptions" ? "active" : "")" asp-controller="Prescriptions" asp-action="Index">
+                        <i class="bi bi-file-earmark-medical"></i>
+                        <span class="sidebar-text">Đơn thuốc</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "Tests" ? "active" : "")" asp-controller="Tests" asp-action="Index">
+                        <i class="bi bi-activity"></i>
+                        <span class="sidebar-text">Xét nghiệm</span>
+                    </a>
+                </li>
+            </ul>
         </nav>
         
         <div id="page-content-wrapper">

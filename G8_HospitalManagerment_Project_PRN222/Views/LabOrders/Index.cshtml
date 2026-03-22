@@ -11,6 +11,36 @@
 
 <div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
     
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        
+        <form asp-action="Index" method="get" class="d-flex flex-grow-1" style="max-width: 500px;">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
+                <span class="input-group-text bg-transparent border-0 text-muted ps-4">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="searchString" value="@ViewBag.CurrentFilter" class="form-control border-0 shadow-none bg-transparent" placeholder="Search by Reason, Doctor, Patient..." aria-label="Search">
+                <button class="btn btn-primary rounded-pill m-1 px-4 fw-medium" type="submit">Search</button>
+            </div>
+            <input type="hidden" name="sortOrder" value="@ViewBag.CurrentSort" />
+        </form>
+
+        <div class="d-flex gap-2">
+            <div class="dropdown shadow-sm rounded-pill">
+                <button class="btn btn-white bg-white border-0 rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium text-dark" type="button" id="sortMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-sort-down text-primary"></i> Sort By
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2" aria-labelledby="sortMenuButton">
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParm" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-calendar-event me-2 text-muted"></i>Order Date</a></li>
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="doctor_asc" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-person-badge me-2 text-muted"></i>Doctor Name</a></li>
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="status_asc" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-circle-half me-2 text-muted"></i>Status</a></li>
+                </ul>
+            </div>
+            
+            <a asp-action="Create" class="open-modal-btn btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
+                <i class="bi bi-plus-lg"></i> New Order
+            </a>
+        </div>
+    </div>
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -66,14 +96,14 @@
                                     }
                                 </td>
                                 <td class="pe-4 py-3 text-end">
-                                    <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-sm btn-link text-muted p-1"><i class="bi bi-eye"></i></a>
-                                    <a asp-action="Edit" asp-route-id="@item.OrderId" class="btn btn-sm btn-link text-muted p-1"><i class="bi bi-pencil-square"></i></a>
+                                    <a asp-action="Details" asp-route-id="@item.OrderId" class="open-modal-btn btn btn-sm btn-light text-muted p-2 rounded-circle me-1"><i class="bi bi-eye"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@item.OrderId" class="open-modal-btn btn btn-sm btn-light text-primary p-2 rounded-circle me-1"><i class="bi bi-pencil-square"></i></a>
                                     <div class="dropdown d-inline">
-                                        <button class="btn btn-sm btn-link text-muted p-1" type="button" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-light text-muted p-2 rounded-circle" type="button" data-bs-toggle="dropdown">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </button>
-                                        <ul class="dropdown-menu shadow-sm border-0">
-                                            <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.OrderId">Delete</a></li>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1">
+                                            <li><a class="open-modal-btn dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.OrderId"><i class="bi bi-trash3 me-2"></i>Delete</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -166,4 +196,44 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 pb-4" id="modal-body-content">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khi click vào bất kỳ nút nào có class 'open-modal-btn'
+            $('.open-modal-btn').on('click', function (e) {
+                e.preventDefault(); // Ngăn trình duyệt chuyển trang
+                
+                var url = $(this).attr('href'); // Lấy đường dẫn (vd: /LabOrder/Create)
+                
+                // Mở modal lên trước và hiện Loading
+                $('#modal-body-content').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading...</p></div>');
+                $('#formModal').modal('show');
+                
+                // Dùng jQuery AJAX gọi đến Server lấy file cshtml về
+                $.get(url, function (data) {
+                    // Nhồi HTML lấy được vào giữa Modal
+                    $('#modal-body-content').html(data);
+                }).fail(function() {
+                    $('#modal-body-content').html('<div class="alert alert-danger">Error loading data. Please try again.</div>');
+                });
+            });
+        });
+    </script>
+}
