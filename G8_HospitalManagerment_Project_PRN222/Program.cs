@@ -12,6 +12,8 @@ builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
 builder.Services.AddSession();
 
 
+builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<AppointmentService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
