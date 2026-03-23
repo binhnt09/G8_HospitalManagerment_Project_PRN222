@@ -172,7 +172,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ViewData["DepartmentId"] = new SelectList(_context.Departments, "DepartmentId", "DepartmentName");
         ViewData["DoctorId"] = new SelectList(_context.Doctors.Include(d => d.Employee).ThenInclude(e => e.User).Select(d => new { d.DoctorId, Name = d.Employee != null && d.Employee.User != null ? d.Employee.User.FirstName + " " + d.Employee.User.LastName : "Unknown Doctor" }), "DoctorId", "Name");
         ViewData["PatientId"] = new SelectList(_context.Patients.Include(p => p.User).Select(p => new { p.PatientId, Name = p.User != null ? p.User.FirstName + " " + p.User.LastName : "Unknown Patient" }), "PatientId", "Name");
-        ViewData["Status"] = new SelectList(new[] { "Scheduled", "Completed", "Cancelled" }, "Scheduled");
+        ViewData["Status"] = new SelectList(new[] { "Confirmed", "Completed", "Cancelled" }, "Confirmed");
     }
 }
 }
