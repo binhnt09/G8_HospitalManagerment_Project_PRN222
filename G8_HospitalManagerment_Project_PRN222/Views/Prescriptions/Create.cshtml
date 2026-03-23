@@ -1,50 +1,290 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Prescription
+@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.PrescriptionCreateViewModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Kê đơn thuốc điện tử";
 }
 
-<h1>Create</h1>
+<div class="container py-4">
 
-<h4>Prescription</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="MedicalRecordId" class="control-label"></label>
-                <select asp-for="MedicalRecordId" class ="form-control" asp-items="ViewBag.MedicalRecordId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class ="form-control" asp-items="ViewBag.PatientId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorId" class="control-label"></label>
-                <select asp-for="DoctorId" class ="form-control" asp-items="ViewBag.DoctorId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorAdvice" class="control-label"></label>
-                <input asp-for="DoctorAdvice" class="form-control" />
-                <span asp-validation-for="DoctorAdvice" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+    @* ── Page header ── *@
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-capsule text-success me-2"></i>Kê đơn thuốc điện tử
+        </h2>
+        <p class="text-muted mb-0">
+            Hồ sơ: <strong>#@Model.MedicalRecordId</strong>
+            @if (!string.IsNullOrEmpty(Model.PatientName))
+            {
+                <span> &nbsp;•&nbsp; Bệnh nhân: <strong>@Model.PatientName</strong></span>
+            }
+            @if (!string.IsNullOrEmpty(Model.DoctorName))
+            {
+                <span> &nbsp;•&nbsp; Bác sĩ: <strong>@Model.DoctorName</strong></span>
+            }
+        </p>
     </div>
+
+    @* ── Global error from ModelState ── *@
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <ul class="mb-0 ps-3">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@err.ErrorMessage</li>
+                }
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* ── Form ── *@
+    <form asp-action="Create" method="post" id="prescriptionForm">
+        @Html.AntiForgeryToken()
+
+        @* Hidden fields *@
+        <input type="hidden" asp-for="MedicalRecordId" />
+        <input type="hidden" asp-for="PatientName" />
+        <input type="hidden" asp-for="DoctorName" />
+        <input type="hidden" asp-for="RecordDate" />
+
+        @* ── Doctor advice ── *@
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <label asp-for="DoctorAdvice" class="form-label fw-semibold fs-6"></label>
+                <textarea asp-for="DoctorAdvice"
+                          class="form-control"
+                          rows="2"
+                          placeholder="Lời dặn của bác sĩ (không bắt buộc)..."></textarea>
+            </div>
+        </div>
+
+        @* ── Drug rows ── *@
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2 text-success"></i>Danh sách thuốc
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline-success" id="addRowBtn">
+                    <i class="bi bi-plus-lg me-1"></i> Thêm thuốc
+                </button>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0" id="drugTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:220px">
+                                    <i class="bi bi-capsule me-1"></i>Thuốc <span class="text-danger">*</span>
+                                </th>
+                                <th style="width:100px">
+                                    Số lượng <span class="text-danger">*</span>
+                                </th>
+                                <th style="width:140px">Liều dùng</th>
+                                <th style="width:100px">Số ngày</th>
+                                <th>Hướng dẫn</th>
+                                <th style="width:60px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="drugRows">
+                            @for (int i = 0; i < Model.Items.Count; i++)
+                            {
+                                <tr class="drug-row">
+                                    <td>
+                                        <select name="Items[@i].DrugId"
+                                                class="form-select form-select-sm drug-select"
+                                                required>
+                                            <option value="">-- Chọn thuốc --</option>
+                                            @foreach (SelectListItem opt in ViewBag.DrugList)
+                                            {
+                                                if (opt.Value == Model.Items[i].DrugId.ToString())
+                                                {
+                                                    <option value="@opt.Value" selected>@opt.Text</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@opt.Value">@opt.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input name="Items[@i].Quantity"
+                                               type="number" min="1"
+                                               value="@Model.Items[i].Quantity"
+                                               class="form-control form-control-sm"
+                                               placeholder="SL"
+                                               required />
+                                    </td>
+                                    <td>
+                                        <input name="Items[@i].Dosage"
+                                               type="text"
+                                               value="@Model.Items[i].Dosage"
+                                               class="form-control form-control-sm"
+                                               placeholder="VD: 1 viên/lần" />
+                                    </td>
+                                    <td>
+                                        <input name="Items[@i].DurationDays"
+                                               type="number" min="1"
+                                               value="@Model.Items[i].DurationDays"
+                                               class="form-control form-control-sm"
+                                               placeholder="Ngày" />
+                                    </td>
+                                    <td>
+                                        <input name="Items[@i].UsageInstructions"
+                                               type="text"
+                                               value="@Model.Items[i].UsageInstructions"
+                                               class="form-control form-control-sm"
+                                               placeholder="Hướng dẫn sử dụng..." />
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger remove-row-btn"
+                                                title="Xóa dòng">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @* ── Action buttons ── *@
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-check-circle me-2"></i>Xác nhận kê đơn
+            </button>
+            <a asp-action="Details" asp-controller="MedicalRecords"
+               asp-route-id="@Model.MedicalRecordId"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Hủy
+            </a>
+        </div>
+
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+@* ── Drug row template (hidden, cloned by JS) ── *@
+<template id="drugRowTemplate">
+    <tr class="drug-row">
+        <td>
+            <select name="Items[__INDEX__].DrugId"
+                    class="form-select form-select-sm drug-select"
+                    required>
+                <option value="">-- Chọn thuốc --</option>
+                @foreach (SelectListItem opt in ViewBag.DrugList)
+                {
+                    <option value="@opt.Value">@opt.Text</option>
+                }
+            </select>
+        </td>
+        <td>
+            <input name="Items[__INDEX__].Quantity"
+                   type="number" min="1" value="1"
+                   class="form-control form-control-sm"
+                   placeholder="SL" required />
+        </td>
+        <td>
+            <input name="Items[__INDEX__].Dosage"
+                   type="text"
+                   class="form-control form-control-sm"
+                   placeholder="VD: 1 viên/lần" />
+        </td>
+        <td>
+            <input name="Items[__INDEX__].DurationDays"
+                   type="number" min="1"
+                   class="form-control form-control-sm"
+                   placeholder="Ngày" />
+        </td>
+        <td>
+            <input name="Items[__INDEX__].UsageInstructions"
+                   type="text"
+                   class="form-control form-control-sm"
+                   placeholder="Hướng dẫn sử dụng..." />
+        </td>
+        <td class="text-center">
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger remove-row-btn"
+                    title="Xóa dòng">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        (function () {
+            let rowIndex = @Model.Items.Count;  // next available index
+
+            // ── Re-index all rows so name attributes stay sequential ──────────
+            function reindexRows() {
+                document.querySelectorAll('#drugRows .drug-row').forEach(function (row, idx) {
+                    row.querySelectorAll('[name]').forEach(function (el) {
+                        el.name = el.name.replace(/Items\[\d+\]/, 'Items[' + idx + ']');
+                    });
+                });
+                rowIndex = document.querySelectorAll('#drugRows .drug-row').length;
+            }
+
+            // ── Add row ───────────────────────────────────────────────────────
+            document.getElementById('addRowBtn').addEventListener('click', function () {
+                const tpl   = document.getElementById('drugRowTemplate');
+                const clone = tpl.content.cloneNode(true);
+                // Replace __INDEX__ placeholder
+                clone.querySelectorAll('[name]').forEach(function (el) {
+                    el.name = el.name.replace(/__INDEX__/g, rowIndex);
+                });
+                document.getElementById('drugRows').appendChild(clone);
+                rowIndex++;
+                bindRemoveButtons();
+            });
+
+            // ── Remove row ────────────────────────────────────────────────────
+            function bindRemoveButtons() {
+                document.querySelectorAll('.remove-row-btn').forEach(function (btn) {
+                    btn.onclick = function () {
+                        const rows = document.querySelectorAll('#drugRows .drug-row');
+                        if (rows.length <= 1) {
+                            alert('Đơn thuốc phải có ít nhất 1 dòng thuốc.');
+                            return;
+                        }
+                        btn.closest('tr').remove();
+                        reindexRows();
+                        bindRemoveButtons();
+                    };
+                });
+            }
+
+            // Initial bind
+            bindRemoveButtons();
+
+            // ── Client-side pre-submit validation ────────────────────────────
+            document.getElementById('prescriptionForm').addEventListener('submit', function (e) {
+                let valid = true;
+                document.querySelectorAll('#drugRows .drug-row').forEach(function (row) {
+                    const drugSel = row.querySelector('.drug-select');
+                    const qty     = row.querySelector('input[type="number"][placeholder="SL"]');
+                    if (!drugSel.value) {
+                        drugSel.classList.add('is-invalid');
+                        valid = false;
+                    } else {
+                        drugSel.classList.remove('is-invalid');
+                    }
+                    if (!qty.value || parseInt(qty.value) < 1) {
+                        qty.classList.add('is-invalid');
+                        valid = false;
+                    } else {
+                        qty.classList.remove('is-invalid');
+                    }
+                });
+                if (!valid) e.preventDefault();
+            });
+        })();
+    </script>
 }
