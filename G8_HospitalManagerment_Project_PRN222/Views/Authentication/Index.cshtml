@@ -95,17 +95,32 @@
 
     <div class="auth-card">
         <div class="tab-header">
-            <a href="?mode=login" class="tab-link @(mode == "login" ? "active" : "")">ĐĂNG NHẬP</a>
-            <a href="?mode=register" class="tab-link @(mode == "register" ? "active" : "")">ĐĂNG KÝ</a>
+            <a asp-controller="Authentication"
+               asp-action="Login"
+               class="tab-link @(mode == "login" ? "active" : "")">
+                ĐĂNG NHẬP
+            </a>
+
+            <a asp-controller="Authentication"
+               asp-action="Register"
+               class="tab-link @(mode == "register" ? "active" : "")">
+                ĐĂNG KÝ
+            </a>
         </div>
 
         <div class="form-container">
             <div class="text-center mb-4">
-                <h2 class="fw-bold text-primary"><i class="fas fa-hand-holding-heart"></i> MomCare</h2>
+                <h2 class="fw-bold text-primary"><i class="fas fa-hand-holding-heart"></i> ChildrenCare</h2>
             </div>
 
             @if (mode == "login")
             {
+                @if (ViewBag.LoginError != null)
+                {
+                    <div class="alert alert-danger">
+                        @ViewBag.LoginError
+                    </div>
+                }
                 <form method="post" asp-action="Login">
                     <div class="mb-4">
                         <label class="form-label small fw-bold">Email</label>
@@ -120,6 +135,9 @@
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
                             <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" />
                         </div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a asp-action="ForgotPassword">Quên mật khẩu?</a>
                     </div>
                     <button type="submit" class="btn btn-submit w-100">ĐĂNG NHẬP NGAY</button>
                 </form>

@@ -1,0 +1,65 @@
+﻿@model G8_HospitalManagerment_Project_PRN222.Models.User
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0" style="border-radius:20px; max-width:700px; margin:auto;">
+
+        <div class="card-body p-4">
+
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary">👤 Thông tin cá nhân</h3>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="fw-bold">Họ</label>
+                    <div class="form-control bg-light">@Model.LastName</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold">Tên</label>
+                    <div class="form-control bg-light">@Model.FirstName</div>
+                </div>
+
+                <div class="col-12">
+                    <label class="fw-bold">Email</label>
+                    <div class="form-control bg-light">@Model.Email</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold">Số điện thoại</label>
+                    <div class="form-control bg-light">@Model.Phone</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold">Giới tính</label>
+                    <div class="form-control bg-light">@Model.Gender</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold">Ngày sinh</label>
+                    <div class="form-control bg-light">
+                        @Model.BirthDay?.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label class="fw-bold">Địa chỉ</label>
+                    <div class="form-control bg-light">@Model.Address</div>
+                </div>
+
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <a asp-action="EditProfile" class="btn btn-primary px-4">
+                    ✏️ Chỉnh sửa
+                </a>
+
+                <a asp-controller="Authentication" asp-action="ChangePassword" class="btn btn-warning px-4">
+                    🔐 Đổi mật khẩu
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
