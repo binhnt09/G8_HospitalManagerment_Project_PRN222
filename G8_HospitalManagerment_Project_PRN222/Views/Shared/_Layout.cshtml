@@ -50,14 +50,75 @@
                             </li>
                         </ul>
 
-                        <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
-                            <a asp-controller="Authentication" asp-action="Index" asp-route-mode="login" class="auth-btn-login">
+                    <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                        @{
+                            var userEmail = Context.Session.GetString("UserEmail");
+                        }
+
+                        @if (string.IsNullOrEmpty(userEmail))
+                        {
+                            <!-- CHƯA LOGIN -->
+                            <a asp-controller="Authentication"
+                               asp-action="Login"
+                               class="auth-btn-login">
                                 Đăng nhập
                             </a>
-                            <a asp-controller="Authentication" asp-action="Index" asp-route-mode="register" class="auth-btn-register">
+
+                            <a asp-controller="Authentication"
+                               asp-action="Register"
+                               class="auth-btn-register">
                                 Đăng ký ngay
                             </a>
-                        </div>
+                        }
+                        else
+                        {
+                            <!-- ĐÃ LOGIN -->
+                            <div class="dropdown">
+                                
+                                @if (!string.IsNullOrEmpty(userEmail))
+                                {
+                                    <button class="btn btn-light dropdown-toggle fw-bold"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+                                        👤 @userEmail
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="Users"
+                                               asp-action="Profile">
+                                                👤 Xem tài khoản
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="Authentication"
+                                               asp-action="ChangePassword">
+                                                🔐 Đổi mật khẩu
+                                            </a>
+                                        </li>
+
+                                        <li><hr class="dropdown-divider"></li>
+
+                                        <li>
+                                            <form asp-controller="Authentication"
+                                                  asp-action="Logout"
+                                                  method="post">
+                                                <button type="submit"
+                                                        class="dropdown-item text-danger">
+                                                    🚪 Đăng xuất
+                                                </button>
+                                            </form>
+                                        </li>
+
+                                    </ul>
+                                }
+                            </div>
+                        }
+                    </div>
                 
                     </div>
                 </div>

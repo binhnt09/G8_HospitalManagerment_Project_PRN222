@@ -15,6 +15,11 @@ builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
 builder.Services.AddScoped<ILabOrderRepository, LabOrderRepository>();
 builder.Services.AddScoped<ILabOrderService, LabOrderService>();
 
+builder.Services.AddSession();
+
+
+builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<AppointmentService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,7 +29,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
+app.UseSession();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
