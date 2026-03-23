@@ -40,7 +40,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         // 3. Tính toán dữ liệu cho 4 thẻ Thống kê (Summary Cards) ở cuối trang
         ViewBag.TotalAppointments = await appointments.CountAsync();
         ViewBag.CompletedCount = await appointments.CountAsync(a => a.Status == "Completed");
-        ViewBag.ScheduledCount = await appointments.CountAsync(a => a.Status == "Scheduled");
+        ViewBag.ConfirmedCount = await appointments.CountAsync(a => a.Status == "Confirmed");
         ViewBag.ActiveCount = await appointments.CountAsync(a => a.IsDeleted == false);
 
         // 4. Xử lý Tìm kiếm (Search)
