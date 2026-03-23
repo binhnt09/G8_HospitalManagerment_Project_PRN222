@@ -1,60 +1,107 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.MedicalRecord
+@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.MedicalRecordCreateViewModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Thêm hồ sơ bệnh án";
 }
 
-<h1>Create</h1>
+<div class="container py-4">
 
-<h4>MedicalRecord</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="AppointmentId" class="control-label"></label>
-                <select asp-for="AppointmentId" class ="form-control" asp-items="ViewBag.AppointmentId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class ="form-control" asp-items="ViewBag.PatientId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorId" class="control-label"></label>
-                <select asp-for="DoctorId" class ="form-control" asp-items="ViewBag.DoctorId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="Diagnosis" class="control-label"></label>
-                <input asp-for="Diagnosis" class="form-control" />
-                <span asp-validation-for="Diagnosis" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Symptoms" class="control-label"></label>
-                <input asp-for="Symptoms" class="form-control" />
-                <span asp-validation-for="Symptoms" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Treatment" class="control-label"></label>
-                <input asp-for="Treatment" class="form-control" />
-                <span asp-validation-for="Treatment" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+    @* ── Page header ── *@
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-file-earmark-medical text-primary me-2"></i>Thêm hồ sơ bệnh án
+        </h2>
+        <p class="text-muted mb-0">Ghi nhận kết quả khám và chẩn đoán sau buổi hẹn.</p>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+    @* ── Appointment context banner ── *@
+    <div class="alert alert-info mb-4 d-flex gap-3 align-items-start">
+        <i class="bi bi-calendar-check fs-4 pt-1"></i>
+        <div>
+            <strong>Thông tin buổi hẹn</strong><br />
+            <span>Bệnh nhân: <strong>@Model.PatientName</strong></span> &nbsp;|&nbsp;
+            <span>Bác sĩ: <strong>@Model.DoctorName</strong></span>
+            @if (Model.AppointmentDate.HasValue)
+            {
+                <span> &nbsp;|&nbsp; Ngày hẹn: <strong>@Model.AppointmentDate.Value.ToString("dd/MM/yyyy HH:mm")</strong></span>
+            }
+        </div>
+    </div>
+
+    @* ── Form card ── *@
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                @* Hidden fields *@
+                <input type="hidden" asp-for="AppointmentId" />
+                <input type="hidden" asp-for="PatientId" />
+                <input type="hidden" asp-for="DoctorId" />
+                <input type="hidden" asp-for="PatientName" />
+                <input type="hidden" asp-for="DoctorName" />
+                <input type="hidden" asp-for="AppointmentDate" />
+
+                @* Global validation summary *@
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" style="display:none"></div>
+
+                <div class="row g-3">
+
+                    @* Diagnosis — required *@
+                    <div class="col-12">
+                        <label asp-for="Diagnosis" class="form-label fw-semibold"></label>
+                        <input asp-for="Diagnosis"
+                               class="form-control form-control-lg"
+                               placeholder="Nhập chẩn đoán..." />
+                        <span asp-validation-for="Diagnosis" class="text-danger small"></span>
+                    </div>
+
+                    @* Symptoms *@
+                    <div class="col-12">
+                        <label asp-for="Symptoms" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Symptoms"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Mô tả triệu chứng bệnh nhân..."></textarea>
+                        <span asp-validation-for="Symptoms" class="text-danger small"></span>
+                    </div>
+
+                    @* Treatment *@
+                    <div class="col-12">
+                        <label asp-for="Treatment" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Treatment"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Phương án điều trị đề xuất..."></textarea>
+                        <span asp-validation-for="Treatment" class="text-danger small"></span>
+                    </div>
+
+                </div>
+
+                @* Action buttons *@
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-2"></i>Lưu hồ sơ &amp; Kê đơn thuốc
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Hủy
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Show validation summary if it contains errors
+        var vs = document.querySelector('[data-valmsg-summary]');
+        if (vs && vs.querySelector('li')) vs.style.display = '';
+    </script>
 }
