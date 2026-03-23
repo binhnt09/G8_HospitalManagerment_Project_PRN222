@@ -14,29 +14,30 @@
                         @* <p class="text-muted mb-4">Vui lòng điền thông tin dưới đây để tạo lịch khám với bác sĩ của chúng tôi.</p> *@
 
                         <form asp-action="Create">
-                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                             <div class="mb-3">
-                                <label asp-for="PatientId" class="form-label"></label>
+                                <label class="form-label">Patient</label>
                                 <select asp-for="PatientId" class="form-select" asp-items="ViewBag.PatientId"></select>
                                 <span asp-validation-for="PatientId" class="text-danger"></span>
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="DoctorId" class="form-label"></label>
+                                <label class="form-label">Doctor</label>
                                 <select asp-for="DoctorId" class="form-select" asp-items="ViewBag.DoctorId"></select>
                                 <span asp-validation-for="DoctorId" class="text-danger"></span>
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="DepartmentId" class="form-label"></label>
+                                <label class="form-label">Department</label>
                                 <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.DepartmentId"></select>
                                 <span asp-validation-for="DepartmentId" class="text-danger"></span>
                             </div>
 
                             <div class="mb-3">
                                 <label asp-for="AppointmentDate" class="form-label"></label>
-                                <input asp-for="AppointmentDate" class="form-control" />
+                                <input asp-for="AppointmentDate" class="form-control" type="datetime-local" />
                                 <span asp-validation-for="AppointmentDate" class="text-danger"></span>
                             </div>
 
@@ -48,7 +49,7 @@
 
                             <div class="mb-3">
                                 <label asp-for="Status" class="form-label"></label>
-                                <input asp-for="Status" class="form-control" />
+                                <select asp-for="Status" class="form-select" asp-items="ViewBag.Status"></select>
                                 <span asp-validation-for="Status" class="text-danger"></span>
                             </div>
 

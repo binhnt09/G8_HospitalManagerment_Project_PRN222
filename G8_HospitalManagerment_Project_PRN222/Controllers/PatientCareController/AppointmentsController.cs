@@ -111,6 +111,9 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Appointment appointment)
     {
+        ModelState.Remove("Department");
+        ModelState.Remove("Doctor");
+        ModelState.Remove("Patient");
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
@@ -166,9 +169,10 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
 
     private void LoadDropdowns()
     {
-        ViewData["DepartmentId"] = new SelectList(_context.Departments, "DepartmentId", "DepartmentId");
-        ViewData["DoctorId"] = new SelectList(_context.Doctors, "DoctorId", "DoctorId");
-        ViewData["PatientId"] = new SelectList(_context.Patients, "PatientId", "PatientId");
+        ViewData["DepartmentId"] = new SelectList(_context.Departments, "DepartmentId", "DepartmentName");
+        ViewData["DoctorId"] = new SelectList(_context.Doctors.Include(d => d.Employee).ThenInclude(e => e.User).Select(d => new { d.DoctorId, Name = d.Employee != null && d.Employee.User != null ? d.Employee.User.FirstName + " " + d.Employee.User.LastName : "Unknown Doctor" }), "DoctorId", "Name");
+        ViewData["PatientId"] = new SelectList(_context.Patients.Include(p => p.User).Select(p => new { p.PatientId, Name = p.User != null ? p.User.FirstName + " " + p.User.LastName : "Unknown Patient" }), "PatientId", "Name");
+        ViewData["Status"] = new SelectList(new[] { "Scheduled", "Completed", "Cancelled" }, "Scheduled");
     }
 }
 }
