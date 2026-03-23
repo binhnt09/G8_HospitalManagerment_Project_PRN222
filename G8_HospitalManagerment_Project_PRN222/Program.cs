@@ -8,6 +8,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("MyCnn")));
+builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<AppointmentService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
