@@ -13,6 +13,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers
             _logger = logger;
         }
 
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public IActionResult Index()
         {
             return View();

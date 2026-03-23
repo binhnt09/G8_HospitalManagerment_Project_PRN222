@@ -146,5 +146,76 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         {
             return _context.Users.Any(e => e.UserId == id);
         }
+
+
+
+
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Authentication");
+            }
+
+            var user = _context.Users
+                .Include(u => u.UserRole)
+                .FirstOrDefault(u => u.UserId == userId);
+
+            return View(user);
+        }
+
+
+        [HttpGet]
+        public IActionResult EditProfile()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Authentication");
+            }
+
+            var user = _context.Users.Find(userId);
+
+            return View(user);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditProfile(EditProfile model)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Authentication");
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // ✅ Update only allowed fields
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.Phone = model.Phone;
+            user.Gender = model.Gender;
+            user.BirthDay = model.BirthDay;
+            user.Address = model.Address;
+            _context.SaveChanges();
+
+            return RedirectToAction("Profile");
+        }
     }
 }
