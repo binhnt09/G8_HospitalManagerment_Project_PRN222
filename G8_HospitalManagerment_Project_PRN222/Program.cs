@@ -1,4 +1,6 @@
-using G8_HospitalManagerment_Project_PRN222.Models;
+﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Repositories;
+using G8_HospitalManagerment_Project_PRN222.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("MyCnn")));
+
+// đăng ký repository and service
+builder.Services.AddScoped<ILabOrderRepository, LabOrderRepository>();
+builder.Services.AddScoped<ILabOrderService, LabOrderService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
