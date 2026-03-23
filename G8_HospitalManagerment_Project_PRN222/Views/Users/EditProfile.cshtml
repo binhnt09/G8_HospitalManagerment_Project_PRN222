@@ -1,0 +1,66 @@
+﻿@model G8_HospitalManagerment_Project_PRN222.Models.User
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0" style="border-radius:20px; max-width:700px; margin:auto;">
+
+        <div class="card-body p-4">
+
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-success">✏️ Chỉnh sửa thông tin</h3>
+            </div>
+
+            <form asp-controller="Users" asp-action="EditProfile" method="post">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="fw-bold">Họ</label>
+                        <input asp-for="LastName" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold">Tên</label>
+                        <input asp-for="FirstName" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold">Số điện thoại</label>
+                        <input asp-for="Phone" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold">Giới tính</label>
+                        <select asp-for="Gender" class="form-select">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-bold">Ngày sinh</label>
+                        <input asp-for="BirthDay" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="fw-bold">Địa chỉ</label>
+                        <input asp-for="Address" class="form-control" />
+                    </div>
+
+                </div>
+
+                <div class="mt-4 d-flex justify-content-between">
+                    <a asp-action="Profile" class="btn btn-secondary">
+                        ← Quay lại
+                    </a>
+
+                    <button type="submit" class="btn btn-success px-4">
+                        💾 Lưu thay đổi
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
