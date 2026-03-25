@@ -1,9 +1,9 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.DTOs;
 using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Repositories;
+using G8_HospitalManagerment_Project_PRN222.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace G8_HospitalManagerment_Project_PRN222.Services
+namespace G8_HospitalManagerment_Project_PRN222.Service
 {
     public class LabOrderService : ILabOrderService
     {
@@ -32,7 +32,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Services
             {
                 searchString = searchString.ToLower();
                 query = query.Where(l =>
-                    (l.Reason != null && l.Reason.ToLower().Contains(searchString)) ||
+                    l.Reason != null && l.Reason.ToLower().Contains(searchString) ||
                     l.DoctorId.ToString().Contains(searchString) ||
                     l.PatientId.ToString().Contains(searchString));
             }

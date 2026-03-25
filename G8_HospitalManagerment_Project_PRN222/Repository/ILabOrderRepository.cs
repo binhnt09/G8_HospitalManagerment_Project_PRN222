@@ -1,6 +1,6 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.Models;
 
-namespace G8_HospitalManagerment_Project_PRN222.Repositories
+namespace G8_HospitalManagerment_Project_PRN222.Repository
 {
     public interface ILabOrderRepository
     {

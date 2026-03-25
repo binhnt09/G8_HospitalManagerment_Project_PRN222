@@ -1,7 +1,7 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace G8_HospitalManagerment_Project_PRN222.Repositories
+namespace G8_HospitalManagerment_Project_PRN222.Repository
 {
     public class LabOrderRepository : ILabOrderRepository
     {

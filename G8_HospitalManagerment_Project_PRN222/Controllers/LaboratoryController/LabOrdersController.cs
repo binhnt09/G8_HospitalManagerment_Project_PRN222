@@ -1,5 +1,5 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Services;
+using G8_HospitalManagerment_Project_PRN222.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;

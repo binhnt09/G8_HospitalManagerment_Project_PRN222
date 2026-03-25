@@ -1,7 +1,7 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.DTOs;
 using G8_HospitalManagerment_Project_PRN222.Models;
 
-namespace G8_HospitalManagerment_Project_PRN222.Services
+namespace G8_HospitalManagerment_Project_PRN222.Service
 {
     public interface ILabOrderService
     {
