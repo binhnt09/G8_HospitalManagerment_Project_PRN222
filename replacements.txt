@@ -1,0 +1,5 @@
+G8_HospitalManagerment_Project_PRN222/Views/_ViewStart.cshtml:9==>REDACTED_CLIENT_ID
+G8_HospitalManagerment_Project_PRN222/Views/_ViewStart.cshtml:10==>REDACTED_CLIENT_SECRET
+G8_HospitalManagerment_Project_PRN222/appsettings.json:14==>REDACTED_CLIENT_ID
+G8_HospitalManagerment_Project_PRN222/appsettings.json:15==>REDACTED_CLIENT_SECRET
+G8_HospitalManagerment_Project_PRN222/appsettings.json:16==>REDACTED_CLIENT_SECRET
