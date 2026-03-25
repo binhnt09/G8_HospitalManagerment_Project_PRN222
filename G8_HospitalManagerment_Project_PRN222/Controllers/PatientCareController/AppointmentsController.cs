@@ -42,7 +42,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ViewBag.TotalAppointments = await appointments.CountAsync();
         ViewBag.CompletedCount = await appointments.CountAsync(a => a.Status == "Completed");
         ViewBag.ConfirmedCount = await appointments.CountAsync(a => a.Status == "Confirmed");
-        ViewBag.ActiveCount = await appointments.CountAsync(a => a.IsDeleted == false);
+        ViewBag.PendingCount = await appointments.CountAsync(a => a.Status == "Pending");
 
         // 4. Xử lý Tìm kiếm (Search)
         if (!String.IsNullOrEmpty(searchString))
@@ -131,7 +131,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
             LoadDropdowns();
             return View(appointment);
         }
-
+        
         await _service.CreateAsync(appointment);
         return RedirectToAction(nameof(Index));
     }
@@ -178,6 +178,11 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
             return View(model);
         }
 
+        if (model.AppointmentDate <= DateTime.Now)
+        {
+            ModelState.AddModelError("AppointmentDate", "Appointment date must be in the future.");
+            return View(model);
+        }
         var appointment = new Appointment
         {
             PatientId = patient.PatientId,
@@ -208,7 +213,9 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     public async Task<IActionResult> Edit(int id, Appointment appointment)
     {
         if (id != appointment.AppointmentId) return NotFound();
-
+        ModelState.Remove("Department");
+        ModelState.Remove("Doctor");
+        ModelState.Remove("Patient");
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
