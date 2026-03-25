@@ -73,7 +73,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 Gender = userInfo.Gender,
                 BirthDay = userInfo.BirthDay,
                 Address = userInfo.Address,
-                UserRoleId = 1
+                UserRoleId = 7
             };
 
             _context.Users.Add(user);
