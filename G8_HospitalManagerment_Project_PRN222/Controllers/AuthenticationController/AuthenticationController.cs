@@ -73,10 +73,11 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 Gender = userInfo.Gender,
                 BirthDay = userInfo.BirthDay,
                 Address = userInfo.Address,
-                UserRoleId = 1
+                UserRoleId = 7
             };
 
             _context.Users.Add(user);
+            _context.SaveChanges();
 
             var authentication = new Authentication
             {
@@ -88,6 +89,10 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
             _context.Authentications.Add(authentication);
             _context.SaveChanges();
+
+            // 👉 Lưu session giống Login
+            HttpContext.Session.SetString("UserEmail", user.Email);
+            HttpContext.Session.SetInt32("UserId", user.UserId);
 
             return RedirectToAction("Index", "Home");
         }

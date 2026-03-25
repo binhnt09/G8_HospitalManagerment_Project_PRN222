@@ -1,7 +1,7 @@
 ﻿@model G8_HospitalManagerment_Project_PRN222.Models.Appointment
 
 @{
-    ViewData["Title"] = "Đặt lịch khám";
+    ViewData["Title"] = "Create an Appointment";
 }
 
 <section class="py-5">
@@ -10,7 +10,7 @@
             <div class="col-lg-8">
                 <div class="card medical-card p-4">
                     <div class="card-body">
-                        <h1 class="fw-bold mb-2">Tạo lịch khám</h1>
+                        <h1 class="fw-bold mb-2">Create an Appointment (Admin)</h1>
                         @* <p class="text-muted mb-4">Vui lòng điền thông tin dưới đây để tạo lịch khám với bác sĩ của chúng tôi.</p> *@
 
                         <form asp-action="Create">
@@ -54,8 +54,8 @@
                             </div>
 
                             <div class="d-flex gap-2">
-                                <input type="submit" value="Đặt lịch" class="btn btn-medical"/>
-                                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                                <input type="submit" value="Create Appointment" class="btn btn-medical"/>
+                                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
                             </div>
                         </form>
                     </div>

@@ -87,6 +87,8 @@
                                         <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Completed</span>
                                     } else if(item.Status == "Confirmed") {
                                         <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Confirmed</span>
+                                    } else if(item.Status == "Pending") {
+                                        <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-2">Pending</span>
                                     } else {
                                         <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">Cancelled</span>
                                     }
@@ -182,8 +184,8 @@
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4 d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted mb-1" style="font-size: 0.9rem;">Scheduled</div>
-                        <h3 class="fw-bold mb-0 text-primary">@ViewBag.ScheduledCount</h3>
+                        <div class="text-muted mb-1" style="font-size: 0.9rem;">Confirmed</div>
+                        <h3 class="fw-bold mb-0 text-primary">@ViewBag.ConfirmedCount</h3>
                     </div>
                     <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; background-color: #E8F0FE; color: #1A73E8;">
                         <i class="bi bi-clock-history fs-5"></i>
@@ -196,8 +198,8 @@
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4 d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted mb-1" style="font-size: 0.9rem;">Active</div>
-                        <h3 class="fw-bold mb-0 text-primary">@ViewBag.ActiveCount</h3>
+                        <div class="text-muted mb-1" style="font-size: 0.9rem;">Pending</div>
+                        <h3 class="fw-bold mb-0 text-primary">@ViewBag.PendingCount</h3>
                     </div>
                     <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; background-color: #E8F0FE; color: #1A73E8;">
                         <i class="bi bi-lightning-charge fs-5"></i>

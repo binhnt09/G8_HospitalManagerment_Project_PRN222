@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
@@ -40,8 +41,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         // 3. Tính toán dữ liệu cho 4 thẻ Thống kê (Summary Cards) ở cuối trang
         ViewBag.TotalAppointments = await appointments.CountAsync();
         ViewBag.CompletedCount = await appointments.CountAsync(a => a.Status == "Completed");
-        ViewBag.ScheduledCount = await appointments.CountAsync(a => a.Status == "Scheduled");
-        ViewBag.ActiveCount = await appointments.CountAsync(a => a.IsDeleted == false);
+        ViewBag.ConfirmedCount = await appointments.CountAsync(a => a.Status == "Confirmed");
+        ViewBag.PendingCount = await appointments.CountAsync(a => a.Status == "Pending");
 
         // 4. Xử lý Tìm kiếm (Search)
         if (!String.IsNullOrEmpty(searchString))
@@ -106,7 +107,18 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         LoadDropdowns();
         return View();
     }
+    
+    // GET: /Appointments/Book - simple booking form for logged-in patients
+    public IActionResult Book()
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (userId == null)
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
 
+        return View();
+    }
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Appointment appointment)
@@ -119,9 +131,71 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
             LoadDropdowns();
             return View(appointment);
         }
-
+        
         await _service.CreateAsync(appointment);
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Appointments/Book
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Book([Bind("AppointmentDate,Reason")] Appointment model)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (userId == null)
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        ModelState.Remove("DoctorId");
+        ModelState.Remove("DepartmentId");
+        ModelState.Remove("PatientId");
+        ModelState.Remove("Department");
+        ModelState.Remove("Doctor");
+        ModelState.Remove("Patient");
+        ModelState.Remove("Status");
+        
+        // Ensure patient record exists for current user
+        var patient = _context.Patients.FirstOrDefault(p => p.UserId == userId.Value);
+        if (patient == null)
+        {
+            patient = new Patient { UserId = userId.Value };
+            _context.Patients.Add(patient);
+            await _context.SaveChangesAsync();
+        }
+
+        // Pick a default doctor and department (assign first available)
+        // var doctor = _context.Doctors.FirstOrDefault();
+        // var department = _context.Departments.FirstOrDefault();
+        // if (doctor == null || department == null)
+        // {
+        //     ModelState.AddModelError(string.Empty, "No doctors or departments available. Please contact admin.");
+        //     return View(model);
+        // }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        if (model.AppointmentDate <= DateTime.Now)
+        {
+            ModelState.AddModelError("AppointmentDate", "Appointment date must be in the future.");
+            return View(model);
+        }
+        var appointment = new Appointment
+        {
+            PatientId = patient.PatientId,
+            DoctorId = null,
+            DepartmentId = null,
+            AppointmentDate = model.AppointmentDate,
+            Reason = model.Reason,
+            Status = "Pending"
+        };
+
+        await _service.CreateAsync(appointment);
+
+        return RedirectToAction("Index");
     }
 
     public async Task<IActionResult> Edit(int? id)
@@ -139,7 +213,9 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     public async Task<IActionResult> Edit(int id, Appointment appointment)
     {
         if (id != appointment.AppointmentId) return NotFound();
-
+        ModelState.Remove("Department");
+        ModelState.Remove("Doctor");
+        ModelState.Remove("Patient");
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
