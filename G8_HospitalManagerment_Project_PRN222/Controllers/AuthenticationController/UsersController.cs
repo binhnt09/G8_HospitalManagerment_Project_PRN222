@@ -154,7 +154,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
 
-        [Authorize(Roles = "2")]
+        [Authorize(Roles = "1")]
         [HttpGet]
         public IActionResult Profile()
         {
