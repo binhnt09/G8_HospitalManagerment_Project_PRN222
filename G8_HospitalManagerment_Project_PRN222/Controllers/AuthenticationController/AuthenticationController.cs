@@ -1,7 +1,11 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -90,9 +94,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             _context.Authentications.Add(authentication);
             _context.SaveChanges();
 
-            // 👉 Lưu session giống Login
-            HttpContext.Session.SetString("UserEmail", user.Email);
-            HttpContext.Session.SetInt32("UserId", user.UserId);
+            await Storage(user);
 
             return RedirectToAction("Index", "Home");
         }
@@ -135,7 +137,6 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 return View("Index", model);
             }
 
-            // So sánh password đã hash
             if (auth.Password != HashPassword(model.Password))
             {
                 ViewBag.LoginError = "Sai mật khẩu!";
@@ -143,11 +144,93 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 return View("Index", model);
             }
 
-            // 👉 Lưu session (đăng nhập thành công)
-            HttpContext.Session.SetString("UserEmail", user.Email);
-            HttpContext.Session.SetInt32("UserId", user.UserId);
+            await Storage(user);
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public IActionResult LoginGoogle()
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action("GoogleResponse")
+            };
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GoogleResponse()
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            if (!result.Succeeded)
+                return RedirectToAction("Login", new { mode = "login" });
+
+            // Lấy các Claims (thông tin) từ Google
+            var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
+            var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            var firstName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
+            var lastName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
+            var nameIdentifier = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+            // KIỂM TRA DATABASE
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                // Nếu chưa có user -> Tạo mới (Đăng ký tự động)
+                user = new User
+                {
+                    Email = email,
+                    FirstName = firstName ?? "Google",
+                    LastName = lastName ?? "User",
+                    UserRoleId = 1,
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                // Tạo bản ghi Authentication cho Google
+                var auth = new Authentication
+                {
+                    UserId = user.UserId,
+                    AuthType = "google",
+                    Password = "",
+                    ProviderKey = nameIdentifier
+                };
+                _context.Authentications.Add(auth);
+                await _context.SaveChangesAsync();
+            }
+
+            await Storage(user);
+
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        public async Task Storage(User user)
+        {
+            var claimsCookie = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // ID hệ thống
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
+                new Claim(ClaimTypes.Role, user.UserRoleId.ToString()) // nếu có role
+            };
+
+            var identity = new ClaimsIdentity(
+                claimsCookie,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal
+            );
         }
 
         [HttpGet]
@@ -173,9 +256,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 ViewBag.Error = "Email không tồn tại!";
                 return View();
             }
-
             HttpContext.Session.SetString("ResetEmail", email);
-
+            HttpContext.Session.SetString("ResetExpire", DateTime.UtcNow.AddMinutes(10).ToString());
             return RedirectToAction("ResetPassword");
         }
 
@@ -229,28 +311,29 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             auth.Password = HashPassword(newPassword);
 
             _context.SaveChanges();
-
-            // 👉 Xóa session sau khi dùng
-            HttpContext.Session.Remove("ResetEmail");
-
             return RedirectToAction("Login");
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
             return RedirectToAction("Login");
         }
 
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
+            if (userIdStr == null)
             {
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", "Authentication");
             }
+
+            int userId = int.Parse(userIdStr);
 
             return View();
         }
@@ -259,12 +342,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [ValidateAntiForgeryToken]
         public IActionResult ChangePassword(string oldPassword, string newPassword, string confirmPassword)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
+            if (userIdStr == null)
             {
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", "Authentication");
             }
+
+            int userId = int.Parse(userIdStr);
 
             if (string.IsNullOrEmpty(oldPassword) ||
                 string.IsNullOrEmpty(newPassword) ||
@@ -303,6 +388,12 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
             ViewBag.Success = "Đổi mật khẩu thành công!";
 
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
             return View();
         }
     }

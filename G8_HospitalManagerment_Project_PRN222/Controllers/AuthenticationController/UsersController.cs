@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using Microsoft.Identity.Client.Extensions.Msal;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
@@ -149,20 +154,27 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
 
-
+        [Authorize(Roles = "2")]
         [HttpGet]
         public IActionResult Profile()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
+            if (userIdStr == null)
             {
                 return RedirectToAction("Login", "Authentication");
             }
 
+            int userId = int.Parse(userIdStr);
+
             var user = _context.Users
                 .Include(u => u.UserRole)
                 .FirstOrDefault(u => u.UserId == userId);
+
+            if (string.IsNullOrEmpty(user.Address))
+            {
+                user.Address = "Không có";
+            }
 
             return View(user);
         }
@@ -171,12 +183,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [HttpGet]
         public IActionResult EditProfile()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
+            if (userIdStr == null)
             {
                 return RedirectToAction("Login", "Authentication");
             }
+
+            int userId = int.Parse(userIdStr);
 
             var user = _context.Users.Find(userId);
 
@@ -185,14 +199,16 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult EditProfile(EditProfile model)
+        public async Task<IActionResult> EditProfile(EditProfile model)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
+            if (userIdStr == null)
             {
                 return RedirectToAction("Login", "Authentication");
             }
+
+            int userId = int.Parse(userIdStr);
 
             var user = _context.Users.FirstOrDefault(u => u.UserId == userId);
 
@@ -206,7 +222,6 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 return View(model);
             }
 
-            // ✅ Update only allowed fields
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
             user.Phone = model.Phone;
@@ -215,7 +230,30 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             user.Address = model.Address;
             _context.SaveChanges();
 
+            await Storage(user);
+
             return RedirectToAction("Profile");
+        }
+        public async Task Storage(User user)
+        {
+            var claimsCookie = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // ID hệ thống
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
+                new Claim(ClaimTypes.Role, user.UserRoleId.ToString()) // nếu có role
+            };
+
+            var identity = new ClaimsIdentity(
+                claimsCookie,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal
+            );
         }
     }
 }

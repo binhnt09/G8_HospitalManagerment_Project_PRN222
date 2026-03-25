@@ -52,10 +52,10 @@
 
                     <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                         @{
-                            var userEmail = Context.Session.GetString("UserEmail");
+                            var userName = @User.Identity.Name;
                         }
 
-                        @if (string.IsNullOrEmpty(userEmail))
+                        @if (string.IsNullOrEmpty(userName))
                         {
                             <!-- CHƯA LOGIN -->
                             <a asp-controller="Authentication"
@@ -74,13 +74,13 @@
                         {
                             <!-- ĐÃ LOGIN -->
                             <div class="dropdown">
-                                
-                                @if (!string.IsNullOrEmpty(userEmail))
+
+                                @if (!string.IsNullOrEmpty(userName))
                                 {
                                     <button class="btn btn-light dropdown-toggle fw-bold"
                                             type="button"
                                             data-bs-toggle="dropdown">
-                                        👤 @userEmail
+                                        👤 @userName
                                     </button>
 
                                     <ul class="dropdown-menu dropdown-menu-end">

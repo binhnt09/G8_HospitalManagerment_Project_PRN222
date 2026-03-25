@@ -1,4 +1,4 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.RegisterViewModel 
+﻿@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.RegisterViewModel
 @{
     var mode = ViewBag.Mode ?? "login";
     ViewData["Title"] = (mode == "register") ? "Tham gia MomCare" : "Chào mừng trở lại";
@@ -139,6 +139,9 @@
                     <div class="text-end mt-2">
                         <a asp-action="ForgotPassword">Quên mật khẩu?</a>
                     </div>
+                    <a asp-action="LoginGoogle" asp-controller="Authentication" class="btn btn-danger">
+                        <i class="fab fa-google"></i> Đăng nhập bằng Google
+                    </a>
                     <button type="submit" class="btn btn-submit w-100">ĐĂNG NHẬP NGAY</button>
                 </form>
             }
