@@ -17,6 +17,9 @@ builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
 builder.Services.AddScoped<ILabOrderRepository, LabOrderRepository>();
 builder.Services.AddScoped<ILabOrderService, LabOrderService>();
 
+builder.Services.AddScoped<ItestRepository, TestRepository>();
+builder.Services.AddScoped<ItestService, TestService>();
+
 builder.Services.AddSession();
 
 builder.Services.AddScoped<AppointmentRepository>();
