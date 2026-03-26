@@ -14,12 +14,12 @@ namespace G8_HospitalManagerment_Project_PRN222.Service
             _repository = repository;
         }
 
-        public async Task<LabOrderDTO> GetIndexDataAsync(string searchString, string sortOrder, int pageIndex, int pageSize)
+        public async Task<IndexDTO> GetIndexDataAsync(string searchString, string sortOrder, int pageIndex, int pageSize)
         {
             var query = _repository.GetAllWithRelations();
 
             // 1. Tính toán thống kê
-            var result = new LabOrderDTO
+            var result = new IndexDTO
             {
                 TotalOrders = await query.CountAsync(),
                 CompletedCount = await query.CountAsync(l => l.Status == "Completed"),

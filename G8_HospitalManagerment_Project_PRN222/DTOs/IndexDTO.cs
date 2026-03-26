@@ -2,9 +2,10 @@
 
 namespace G8_HospitalManagerment_Project_PRN222.DTOs
 {
-    public class LabOrderDTO
+    public class IndexDTO
     {
         public List<LabOrder>? PagedData { get; set; }
+        public List<Test>? TestPagedData { get; set; }
 
         // Dữ liệu thống kê
         public int TotalOrders { get; set; }
