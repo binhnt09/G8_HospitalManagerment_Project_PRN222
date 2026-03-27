@@ -1,11 +1,16 @@
 using G8_HospitalManagerment_Project_PRN222.Models;
+using Microsoft.AspNetCore.SignalR;
+using G8_HospitalManagerment_Project_PRN222.Hubs;
+
 public class AppointmentService
 {
     private readonly AppointmentRepository _repo;
+    private readonly IHubContext<AppointmentHub> _hubContext;
 
-    public AppointmentService(AppointmentRepository repo)
+    public AppointmentService(AppointmentRepository repo, IHubContext<AppointmentHub> hubContext)
     {
         _repo = repo;
+        _hubContext = hubContext;
     }
 
     public async Task<List<Appointment>> GetAllAsync()
@@ -24,6 +29,7 @@ public class AppointmentService
         appointment.CreatedAt = DateTime.Now;
 
         await _repo.AddAsync(appointment);
+        await _hubContext.Clients.All.SendAsync("ReceiveAppointmentUpdate");
     }
 
     public async Task UpdateAsync(Appointment appointment)
@@ -31,6 +37,7 @@ public class AppointmentService
         appointment.UpdatedAt = DateTime.Now;
 
         await _repo.UpdateAsync(appointment);
+        await _hubContext.Clients.All.SendAsync("ReceiveAppointmentUpdate");
     }
 
     public async Task<List<Appointment>> GetPagedAsync(string searchString, string sortOrder, int pageNumber, int pageSize)
@@ -56,5 +63,6 @@ public class AppointmentService
     public async Task DeleteAsync(int id)
     {
         await _repo.DeleteAsync(id);
+        await _hubContext.Clients.All.SendAsync("ReceiveAppointmentUpdate");
     }
 }

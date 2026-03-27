@@ -86,7 +86,22 @@
                         }
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/signalr/signalr.min.js"></script>
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("/appointmentHub").build();
+
+        connection.on("ReceiveAppointmentUpdate", function () {
+            // Auto reload the data
+            location.reload();
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+    </script>
+}

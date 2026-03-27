@@ -301,8 +301,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         if (appointment.Status != "Cancelled" && appointment.Status != "Completed")
         {
             appointment.Status = "Cancelled";
-            _context.Update(appointment);
-            await _context.SaveChangesAsync();
+            await _service.UpdateAsync(appointment);
         }
 
         return RedirectToAction(nameof(MyAppointments));

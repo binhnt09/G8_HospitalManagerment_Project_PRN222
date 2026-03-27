@@ -1,4 +1,4 @@
-﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.Repository;
 using G8_HospitalManagerment_Project_PRN222.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
@@ -75,5 +76,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<G8_HospitalManagerment_Project_PRN222.Hubs.AppointmentHub>("/appointmentHub");
 
 app.Run();
