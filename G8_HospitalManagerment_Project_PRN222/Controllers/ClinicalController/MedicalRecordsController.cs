@@ -1,3 +1,4 @@
+using G8_HospitalManagerment_Project_PRN222.Hubs;
 using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using G8_HospitalManagerment_Project_PRN222.Hubs;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
 {
@@ -22,6 +22,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
             _context = context;
             _hubContext = hubContext;
         }
+
 
         // =====================================================================
         // FEATURE 1 — Xem chi tiết hồ sơ bệnh án
@@ -72,7 +73,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                     OrderDate = i.OrderDate,
                     Status = i.Status,
                     ServiceId = i.ServiceId,
-                     ServiceName = i.Service?.ServiceName // Mở ra nếu có Include Service
+                    ServiceName = i.Service?.ServiceName // Mở ra nếu có Include Service
                 }).ToList(),
 
                 Prescriptions = record.Prescriptions
@@ -177,7 +178,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                         DoctorId = model.DoctorId,
                         PatientId = newRecord.PatientId,
                         OrderDate = DateTime.Now,
-                            Status = "Pending"
+                        Status = "Pending"
                     };
                     foreach (var testId in model.SelectedLabTests)
                     {
@@ -231,9 +232,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 //    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Chẩn đoán hình ảnh
                 //    await _hubContext.Clients.Group("ImagingTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
                 //}
-                
-                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
 
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 TempData["Success"] = "Hồ sơ bệnh án đã được tạo thành công.";
 
                 // Redirect to prescription creation with the new RecordId
@@ -346,7 +346,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
             // Tính toán số liệu thống kê cho Dashboard
             ViewBag.TotalAllRecords = await _context.MedicalRecords.CountAsync(m => m.IsDeleted != true);
             ViewBag.TotalRecordsToday = await _context.MedicalRecords.CountAsync(m => m.RecordDate.HasValue && m.RecordDate.Value.Date == DateTime.Today);
-            ViewBag.TotalPending = await _context.MedicalRecords.CountAsync(m => 
+            ViewBag.TotalPending = await _context.MedicalRecords.CountAsync(m =>
                 m.IsDeleted != true && m.LabOrders.Any(l => l.Status == "Pending") || m.ImagingOrders.Any(i => i.Status == "Pending"));
             ViewBag.TotalCompleted = await _context.MedicalRecords.CountAsync(m =>
                 m.IsDeleted != true && (m.LabOrders.Any() || m.ImagingOrders.Any()) &&
@@ -373,7 +373,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
             ViewData["AppointmentId"] = new SelectList(_context.Appointments, "AppointmentId", "AppointmentId", medicalRecord.AppointmentId);
             ViewData["DoctorId"] = new SelectList(_context.Doctors, "DoctorId", "DoctorId", medicalRecord.DoctorId);
             ViewData["DoctorName"] = medicalRecord.Doctor?.Employee.User != null
-                ? $"{medicalRecord.Doctor.Employee.User.FirstName} {medicalRecord.Doctor.Employee.User.LastName}": $"Bác sĩ #{medicalRecord.DoctorId}";
+                ? $"{medicalRecord.Doctor.Employee.User.FirstName} {medicalRecord.Doctor.Employee.User.LastName}" : $"Bác sĩ #{medicalRecord.DoctorId}";
             ViewData["PatientId"] = new SelectList(_context.Patients, "PatientId", "PatientId", medicalRecord.PatientId);
             ViewData["PatientName"] = medicalRecord.Patient?.User != null
                 ? $"{medicalRecord.Patient.User.FirstName} {medicalRecord.Patient.User.LastName}" : $"Bệnh nhân #{medicalRecord.PatientId}";
@@ -399,21 +399,9 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
 
             try
             {
-                try
-                {
-                    _context.Update(medicalRecord);
-                    await _context.SaveChangesAsync();
-                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.MedicalRecords.Any(e => e.RecordId == medicalRecord.RecordId))
-                        return NotFound();
-                    throw;
-                }
-                return RedirectToAction(nameof(Index));
-            }
-
+                _context.Update(existingRecord);
+                await _context.SaveChangesAsync(); // Lưu chẩn đoán vào DB
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 TempData["Success"] = "Đã lưu chẩn đoán. Đang chuyển hướng...";
 
                 // ========================================================
