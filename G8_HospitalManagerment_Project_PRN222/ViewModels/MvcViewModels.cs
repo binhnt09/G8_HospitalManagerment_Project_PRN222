@@ -47,6 +47,27 @@ namespace G8_HospitalManagerment_Project_PRN222.ViewModels
         public string? Treatment { get; set; }
 
         public List<PrescriptionDetailBlock> Prescriptions { get; set; } = new();
+
+        public string Status { get; set; } // Để biết là nội trú, mổ hay kê đơn
+        public List<LabOrderDetailBlock> LabOrders { get; set; } = new List<LabOrderDetailBlock>();
+        public List<ImagingOrderDetailBlock> ImagingOrders { get; set; } = new List<ImagingOrderDetailBlock>();
+    }
+
+    public class LabOrderDetailBlock
+    {
+        public int OrderId { get; set; }
+        public DateTime? OrderDate { get; set; }
+        public string Status { get; set; }
+        public List<string> TestNames { get; set; } = new List<string>();
+    }
+
+    public class ImagingOrderDetailBlock
+    {
+        public int OrderId { get; set; }
+        public DateTime? OrderDate { get; set; }
+        public string Status { get; set; }
+        public int ServiceId { get; set; }
+        public string ServiceName { get; set; } // Nếu DB bạn kết nối được bảng Service
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -40,7 +40,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Service
             // 3. Xử lý Sắp xếp
             query = sortOrder switch
             {
-                "date_desc" => query.OrderByDescending(l => l.OrderDate),
+                "date_asc" => query.OrderByDescending(l => l.OrderDate),
                 _ => query.OrderBy(l => l.OrderDate),
             };
 

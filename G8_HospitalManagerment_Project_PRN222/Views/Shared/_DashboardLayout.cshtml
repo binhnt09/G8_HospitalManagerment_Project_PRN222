@@ -57,6 +57,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(currentController == "ImagingOrders" ? "active" : "")" asp-controller="ImagingOrders" asp-action="Index">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        <span class="sidebar-text">Chẩn đoán</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(currentController == "Appointments" ? "active" : "")" asp-controller="Appointments" asp-action="Index">
                         <i class="bi bi-calendar-check"></i>
                         <span class="sidebar-text">Lịch hẹn</span>
@@ -90,6 +96,12 @@
                     <a class="nav-link @(currentController == "Tests" ? "active" : "")" asp-controller="Tests" asp-action="Index">
                         <i class="bi bi-activity"></i>
                         <span class="sidebar-text">Xét nghiệm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentController == "InpatientAdmissions" ? "active" : "")" asp-controller="InpatientAdmissions" asp-action="Index">
+                        <i class="bi bi-activity"></i>
+                        <span class="sidebar-text">Khám nội trú</span>
                     </a>
                 </li>
             </ul>

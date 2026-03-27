@@ -40,36 +40,39 @@ namespace G8_HospitalManagerment_Project_PRN222.ViewModels
     {
         public int RecordId { get; set; }
         public string PatientName { get; set; }
+        public string DoctorName { get; set; }
+        public DateTime? RecordDate { get; set; }
 
-        // BÊN TRÁI: Dữ liệu Read-only (Kết quả cận lâm sàng)
-        public List<LabResultDTO> LabResults { get; set; } = new List<LabResultDTO>();
-        public List<ImagingResultDTO> ImagingResults { get; set; } = new List<ImagingResultDTO>();
+        // --- BÊN TRÁI: DỮ LIỆU HIỂN THỊ KẾT QUẢ (READ-ONLY) ---
+        // Giả sử ta gom thành chuỗi hiển thị cho dễ, hoặc dùng 1 class DTO nhỏ
+        public List<LabResultItemDto> LabResults { get; set; } = new List<LabResultItemDto>();
+        public List<ImagingResultItemDto> ImagingResults { get; set; } = new List<ImagingResultItemDto>();
 
-        // BÊN PHẢI: Dữ liệu Editable
+        // --- BÊN PHẢI: FORM BÁC SĨ CHỐT BỆNH ---
         [Required(ErrorMessage = "Vui lòng nhập chẩn đoán xác định")]
-        [Display(Name = "Chẩn đoán xác định (Final Diagnosis)")]
+        [Display(Name = "Chẩn đoán xác định")]
         public string FinalDiagnosis { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập hướng điều trị")]
-        [Display(Name = "Hướng điều trị (Treatment)")]
+        [Display(Name = "Hướng điều trị chi tiết")]
         public string Treatment { get; set; }
 
-        // Option Quyết định của Bác sĩ (Ngoại trú, Nội trú, Phẫu thuật)
+        // --- BÊN PHẢI: 3 OPTION XỬ LÝ (Kê đơn, Nhập viện, Mổ) ---
         [Required(ErrorMessage = "Vui lòng chọn hướng xử lý tiếp theo")]
-        public string DecisionOption { get; set; }
+        public string NextStepDecision { get; set; }
     }
 
-    public class LabResultDTO
+    public class LabResultItemDto
     {
-        public string TestName { get; set; }
-        public string ResultValue { get; set; }
-        public string Status { get; set; }
+        public string? TestName { get; set; }
+        public string? ResultValue { get; set; }
+        public string? Status { get; set; }
     }
 
-    public class ImagingResultDTO
+    public class ImagingResultItemDto
     {
-        public string ServiceName { get; set; }
-        public string Conclusion { get; set; }
-        public string ImageUrl { get; set; }
+        public string? ServiceName { get; set; }
+        public string? Conclusion { get; set; }
+        public string? Description { get; set; }
     }
 }

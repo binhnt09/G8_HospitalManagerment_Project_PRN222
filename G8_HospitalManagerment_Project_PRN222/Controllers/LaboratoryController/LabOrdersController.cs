@@ -9,40 +9,80 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
     public class LabOrdersController : Controller
     {
         private readonly ILabOrderService _service;
+        private readonly DbHospitalManagementContext _context;
 
-        public LabOrdersController(ILabOrderService service)
+        public LabOrdersController(ILabOrderService service, DbHospitalManagementContext context)
         {
-            _service = service;
+                _service = service;
+            _context = context;
         }
 
         // GET: LabOrders
-        public async Task<IActionResult> Index(string searchString, string sortOrder, int? pageNumber)
+        public async Task<IActionResult> Index(string searchString, string sortOrder, string filterStatus, int? pageNumber)
         {
             int pageSize = 6;
             int pageIndex = pageNumber ?? 1;
 
-            // Lưu trạng thái Search/Sort cho View
+            // 1. Lưu trạng thái Search/Sort/Filter cho View
             ViewBag.CurrentSort = sortOrder;
-            ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_asc" : "";
             ViewBag.CurrentFilter = searchString;
+            ViewBag.CurrentStatusFilter = filterStatus;
             ViewBag.CurrentPage = pageIndex;
 
-            // Gọi Service xử lý toàn bộ logic
-            var dataResult = await _service.GetIndexDataAsync(searchString, sortOrder, pageIndex, pageSize);
+            // 2. Khởi tạo Query trực tiếp tại Controller để xử lý Lọc chính xác
+            var query = _context.LabOrders
+                .Include(l => l.Doctor)
+                .Include(l => l.Patient)
+                .Include(l => l.MedicalRecord)
+                .AsQueryable();
 
-            // Gán lại ViewBag cho View hiện tại của bạn không bị hỏng
-            ViewBag.TotalOrders = dataResult.TotalOrders;
-            ViewBag.CompletedCount = dataResult.CompletedCount;
-            ViewBag.PendingCount = dataResult.PendingCount;
-            ViewBag.ActiveCount = dataResult.ActiveCount;
+            // 3. XỬ LÝ LỌC (FILTER) THEO YÊU CẦU CỦA BẠN
+            if (!string.IsNullOrEmpty(filterStatus))
+            {
+                if (filterStatus == "Today")
+                    query = query.Where(l => l.OrderDate.HasValue && l.OrderDate.Value.Date == DateTime.Today);
+                else if (filterStatus == "Pending")
+                    query = query.Where(l => l.Status == "Pending");
+                else if (filterStatus == "Completed")
+                    query = query.Where(l => l.Status == "Completed");
+            }
 
-            ViewBag.TotalPages = dataResult.TotalPages;
-            ViewBag.TotalItems = dataResult.TotalOrders;
-            ViewBag.ItemStart = dataResult.ItemStart;
-            ViewBag.ItemEnd = dataResult.ItemEnd;
+            // 4. XỬ LÝ TÌM KIẾM (SEARCH)
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                query = query.Where(l =>
+                    (l.Reason != null && l.Reason.ToLower().Contains(searchString)) ||
+                    l.DoctorId.ToString().Contains(searchString) ||
+                    l.PatientId.ToString().Contains(searchString));
+            }
 
-            // Trả đúng list PagedData ra cho file Index.cshtml
-            return View(dataResult.PagedData);
+            // 5. XỬ LÝ SẮP XẾP (SORT)
+            switch (sortOrder)
+            {
+                case "doctor_asc": query = query.OrderBy(l => l.DoctorId); break;
+                case "status_asc": query = query.OrderBy(l => l.Status); break;
+                case "date_asc": query = query.OrderBy(l => l.OrderDate); break;
+                default: query = query.OrderByDescending(l => l.OrderDate); break; // Mặc định mới nhất lên đầu
+            }
+
+            // 6. XỬ LÝ PHÂN TRANG (PAGINATION)
+            int totalItems = await query.CountAsync();
+            var records = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            // 7. TÍNH TOÁN CARD THỐNG KÊ BÊN DƯỚI (Không bị ảnh hưởng bởi bộ lọc)
+            ViewBag.TotalOrders = await _context.LabOrders.CountAsync();
+            ViewBag.CompletedCount = await _context.LabOrders.CountAsync(l => l.Status == "Completed");
+            ViewBag.PendingCount = await _context.LabOrders.CountAsync(l => l.Status == "Pending");
+            ViewBag.ActiveCount = await _context.LabOrders.CountAsync(l => l.IsDeleted != true);
+
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ViewBag.TotalItems = totalItems;
+            ViewBag.ItemStart = totalItems == 0 ? 0 : (pageIndex - 1) * pageSize + 1;
+            ViewBag.ItemEnd = Math.Min(pageIndex * pageSize, totalItems);
+
+            return View(records);
         }
 
         // GET: LabOrders/Details/5

@@ -1,7 +1,7 @@
-﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.LabOrder>
+﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.ImagingOrder>
 
 @{
-    ViewData["Title"] = "Quản lý Xét nghiệm (Lab Orders)";
+    ViewData["Title"] = "Quản lý chẩn đoán hình ảnh";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
     int currentPage = ViewBag.CurrentPage;
     int totalPages = ViewBag.TotalPages;
@@ -71,7 +71,7 @@
                                         Order Date <i class="bi bi-arrow-down-up ms-1"></i>
                                     </a>
                                 </th>
-                                <th class="py-3 border-bottom-0 fw-semibold">Reason</th>
+                                <th class="py-3 border-bottom-0 fw-semibold">Service</th>
                                 <th class="py-3 border-bottom-0 fw-semibold">Doctor</th>
                                 <th class="py-3 border-bottom-0 fw-semibold">Patient</th>
                                 <th class="py-3 border-bottom-0 fw-semibold">Status</th>
@@ -82,7 +82,7 @@
                         <tbody class="border-top-0">
                             @if(!Model.Any())
                             {
-                                <tr><td colspan="7" class="text-center py-5 text-muted">No lab orders found.</td></tr>
+                                <tr><td colspan="7" class="text-center py-5 text-muted">No Image orders found.</td></tr>
                             }
                             @foreach (var item in Model) {
                                 <tr>
@@ -91,14 +91,15 @@
                                         <div class="text-muted small">@item.OrderDate?.ToString("HH:mm")</div>
                                     </td>
                                     <td class="py-3">
-                                        <div class="text-dark">@item.Reason</div>
+                                        <div class="text-dark">@item.Service.ServiceName</div>
                                         <div class="text-muted small">Record: @item.MedicalRecord?.RecordId</div>
                                     </td>
                                     <td class="py-3">
                                         <div class="fw-bold text-dark">Dr. @(item.Doctor?.DoctorId)</div>
                                     </td>
                                     <td class="py-3">
-                                        <div class="fw-bold text-dark">@item.Patient?.PatientId</div>
+                                        <div class="fw-bold text-dark">@(item.Patient?.User?.FirstName + " " + item.Patient?.User?.LastName)</div>
+                                        <div class="text-muted small">Mã BN: @item.Patient?.PatientId</div>
                                     </td>
                                     <td class="py-3">
                                         @if(item.Status == "Completed") {
