@@ -33,6 +33,8 @@ public partial class MedicalRecord
 
     public virtual Doctor Doctor { get; set; } = null!;
 
+    public virtual ICollection<ImagingOrder> ImagingOrders { get; set; } = new List<ImagingOrder>();
+
     public virtual ICollection<LabOrder> LabOrders { get; set; } = new List<LabOrder>();
 
     public virtual Patient Patient { get; set; } = null!;

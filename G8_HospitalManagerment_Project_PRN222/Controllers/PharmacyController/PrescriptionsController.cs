@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using G8_HospitalManagerment_Project_PRN222.ViewModels;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
 {

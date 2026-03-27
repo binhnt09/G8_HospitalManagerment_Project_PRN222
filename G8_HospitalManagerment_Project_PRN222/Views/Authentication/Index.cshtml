@@ -1,4 +1,5 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.RegisterViewModel
+﻿@using G8_HospitalManagerment_Project_PRN222.ViewModels
+@model RegisterViewModel
 @{
     var mode = ViewBag.Mode ?? "login";
     ViewData["Title"] = (mode == "register") ? "Tham gia ChildrenCare" : "Chào mừng trở lại";

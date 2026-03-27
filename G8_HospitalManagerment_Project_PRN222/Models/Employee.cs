@@ -29,9 +29,13 @@ public partial class Employee
 
     public bool? IsDeleted { get; set; }
 
+    public virtual ICollection<DailyCareRecord> DailyCareRecords { get; set; } = new List<DailyCareRecord>();
+
     public virtual Department Department { get; set; } = null!;
 
     public virtual Doctor? Doctor { get; set; }
+
+    public virtual ICollection<ImagingResult> ImagingResults { get; set; } = new List<ImagingResult>();
 
     public virtual ICollection<LabResult> LabResults { get; set; } = new List<LabResult>();
 

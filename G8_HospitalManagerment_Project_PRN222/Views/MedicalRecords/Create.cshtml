@@ -1,98 +1,177 @@
-@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.MedicalRecordCreateViewModel
+@model G8_HospitalManagerment_Project_PRN222.ViewModels.Encounter1CreateViewModel
 
 @{
-    ViewData["Title"] = "Thêm hồ sơ bệnh án";
+    ViewData["Title"] = "Thêm hồ sơ bệnh án (Khám lần 1)";
 }
+
+<style>
+    /* Custom CSS để Checkbox trông giống các Tag/Pill hiện đại */
+    .custom-checkbox-tag .form-check-input {
+        display: none; /* Ẩn ô checkbox mặc định */
+    }
+    .custom-checkbox-tag .form-check-label {
+        cursor: pointer;
+        border: 1px solid #dee2e6;
+        border-radius: 50rem;
+        padding: 8px 16px;
+        background-color: #f8f9fa;
+        color: #495057;
+        transition: all 0.2s ease-in-out;
+        font-weight: 500;
+    }
+    .custom-checkbox-tag .form-check-input:checked + .form-check-label {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+    }
+    .custom-checkbox-tag .form-check-input:checked + .form-check-label i {
+        display: inline-block !important; /* Hiện icon check khi được chọn */
+    }
+</style>
 
 <div class="container py-4">
 
     @* ── Page header ── *@
-    <div class="mb-4">
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-file-earmark-medical text-primary me-2"></i>Thêm hồ sơ bệnh án
-        </h2>
-        <p class="text-muted mb-0">Ghi nhận kết quả khám và chẩn đoán sau buổi hẹn.</p>
+    <div class="mb-4 d-flex justify-content-between align-items-end">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-file-earmark-medical text-primary me-2"></i>Thêm hồ sơ bệnh án
+            </h2>
+            <p class="text-muted mb-0">Khám lần 1: Ghi nhận lâm sàng và ra chỉ định.</p>
+        </div>
     </div>
 
     @* ── Appointment context banner ── *@
-    <div class="alert alert-info mb-4 d-flex gap-3 align-items-start">
-        <i class="bi bi-calendar-check fs-4 pt-1"></i>
+    <div class="alert alert-info border-0 shadow-sm mb-4 d-flex gap-3 align-items-start rounded-4">
+        <i class="bi bi-calendar-check fs-3 text-info pt-1"></i>
         <div>
-            <strong>Thông tin buổi hẹn</strong><br />
-            <span>Bệnh nhân: <strong>@Model.PatientName</strong></span> &nbsp;|&nbsp;
-            <span>Bác sĩ: <strong>@Model.DoctorName</strong></span>
+            <strong class="fs-5 text-dark">Thông tin buổi hẹn</strong><br />
+            <span class="text-muted">Bệnh nhân: <strong class="text-dark">@Model.PatientName</strong></span> &nbsp;|&nbsp;
+            <span class="text-muted">Bác sĩ: <strong class="text-dark">@Model.DoctorName</strong></span>
             @if (Model.AppointmentDate.HasValue)
             {
-                <span> &nbsp;|&nbsp; Ngày hẹn: <strong>@Model.AppointmentDate.Value.ToString("dd/MM/yyyy HH:mm")</strong></span>
+                <span class="text-muted"> &nbsp;|&nbsp; Ngày hẹn: <strong class="text-dark">@Model.AppointmentDate.Value.ToString("dd/MM/yyyy HH:mm")</strong></span>
             }
         </div>
     </div>
 
-    @* ── Form card ── *@
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
 
-            <form asp-action="Create" method="post">
-                @Html.AntiForgeryToken()
+        @* Hidden fields *@
+        <input type="hidden" asp-for="AppointmentId" />
+        <input type="hidden" asp-for="PatientId" />
+        <input type="hidden" asp-for="DoctorId" />
+        <input type="hidden" asp-for="PatientName" />
+        <input type="hidden" asp-for="DoctorName" />
+        <input type="hidden" asp-for="AppointmentDate" />
 
-                @* Hidden fields *@
-                <input type="hidden" asp-for="AppointmentId" />
-                <input type="hidden" asp-for="PatientId" />
-                <input type="hidden" asp-for="DoctorId" />
-                <input type="hidden" asp-for="PatientName" />
-                <input type="hidden" asp-for="DoctorName" />
-                <input type="hidden" asp-for="AppointmentDate" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" style="display:none"></div>
 
-                @* Global validation summary *@
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" style="display:none"></div>
+        <div class="row g-4">
+            @* ── CỘT TRÁI: THÔNG TIN LÂM SÀNG ── *@
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 h-100 rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                            <i class="bi bi-clipboard2-pulse"></i> Thông tin Lâm sàng
+                        </h5>
+                        
+                        <div class="row g-3">
+                            @* Symptoms *@
+                            <div class="col-12">
+                                <label asp-for="Symptoms" class="form-label fw-semibold"></label>
+                                <textarea asp-for="Symptoms" class="form-control" rows="3" placeholder="Mô tả triệu chứng bệnh nhân..."></textarea>
+                                <span asp-validation-for="Symptoms" class="text-danger small"></span>
+                            </div>
 
-                <div class="row g-3">
+                            @* Diagnosis — required *@
+                            <div class="col-12">
+                                <label asp-for="Diagnosis" class="form-label fw-semibold">Chẩn đoán sơ bộ</label>
+                                <input asp-for="Diagnosis" class="form-control form-control-lg text-primary fw-medium" placeholder="Nhập chẩn đoán..." />
+                                <span asp-validation-for="Diagnosis" class="text-danger small"></span>
+                            </div>
 
-                    @* Diagnosis — required *@
-                    <div class="col-12">
-                        <label asp-for="Diagnosis" class="form-label fw-semibold"></label>
-                        <input asp-for="Diagnosis"
-                               class="form-control form-control-lg"
-                               placeholder="Nhập chẩn đoán..." />
-                        <span asp-validation-for="Diagnosis" class="text-danger small"></span>
+                            @* Treatment (Nếu có xử lý tại chỗ sơ bộ) *@
+                            <div class="col-12">
+                                <label asp-for="Treatment" class="form-label fw-semibold">Xử trí sơ bộ (Nếu có)</label>
+                                <textarea asp-for="Treatment" class="form-control" rows="2" placeholder="Sơ cứu, xử lý tại chỗ..."></textarea>
+                                <span asp-validation-for="Treatment" class="text-danger small"></span>
+                            </div>
+                        </div>
                     </div>
-
-                    @* Symptoms *@
-                    <div class="col-12">
-                        <label asp-for="Symptoms" class="form-label fw-semibold"></label>
-                        <textarea asp-for="Symptoms"
-                                  class="form-control"
-                                  rows="3"
-                                  placeholder="Mô tả triệu chứng bệnh nhân..."></textarea>
-                        <span asp-validation-for="Symptoms" class="text-danger small"></span>
-                    </div>
-
-                    @* Treatment *@
-                    <div class="col-12">
-                        <label asp-for="Treatment" class="form-label fw-semibold"></label>
-                        <textarea asp-for="Treatment"
-                                  class="form-control"
-                                  rows="3"
-                                  placeholder="Phương án điều trị đề xuất..."></textarea>
-                        <span asp-validation-for="Treatment" class="text-danger small"></span>
-                    </div>
-
                 </div>
+            </div>
 
-                @* Action buttons *@
-                <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-save me-2"></i>Lưu hồ sơ &amp; Kê đơn thuốc
-                    </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-lg me-1"></i>Hủy
-                    </a>
+            @* ── CỘT PHẢI: CHỈ ĐỊNH CẬN LÂM SÀNG (CHECKBOX) ── *@
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 h-100 rounded-4 bg-light">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-danger border-bottom pb-2 mb-3">
+                            <i class="bi bi-eyedropper"></i> Chỉ định Cận lâm sàng
+                        </h5>
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark mb-3">Xét nghiệm (Lab Tests)</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if(Model.AvailableLabTests != null && Model.AvailableLabTests.Any())
+                                {
+                                    foreach (var item in Model.AvailableLabTests)
+                                    {
+                                        <div class="form-check custom-checkbox-tag ps-0">
+                                            <input class="form-check-input" type="checkbox" name="SelectedLabTests" value="@item.Value" id="lab_@item.Value">
+                                            <label class="form-check-label" for="lab_@item.Value">
+                                                <i class="bi bi-check-circle-fill me-1" style="display:none;"></i> @item.Text
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Không có dịch vụ xét nghiệm nào.</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div>
+                            <h6 class="fw-bold text-dark mb-3">Chẩn đoán hình ảnh (X-Quang, Siêu âm...)</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if(Model.AvailableImagingServices != null && Model.AvailableImagingServices.Any())
+                                {
+                                    foreach (var item in Model.AvailableImagingServices)
+                                    {
+                                        <div class="form-check custom-checkbox-tag ps-0">
+                                            <input class="form-check-input" type="checkbox" name="SelectedImagingServices" value="@item.Value" id="img_@item.Value">
+                                            <label class="form-check-label" for="img_@item.Value">
+                                                <i class="bi bi-check-circle-fill me-1" style="display:none;"></i> @item.Text
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Không có dịch vụ chẩn đoán hình ảnh nào.</span>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-
-            </form>
+            </div>
         </div>
-    </div>
 
+        @* ── Action buttons ── *@
+        <div class="d-flex justify-content-end gap-3 mt-4 mb-5">
+            <a asp-action="Index" class="btn btn-light px-4 shadow-sm border">
+                <i class="bi bi-x-lg me-1"></i>Hủy
+            </a>
+            <button type="submit" class="btn btn-primary px-5 shadow-sm fw-bold">
+                <i class="bi bi-send-check me-2"></i>Lưu hồ sơ & Gửi chỉ định
+            </button>
+        </div>
+
+    </form>
 </div>
 
 @section Scripts {
