@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -133,7 +133,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    
+    <script src="~/microsoft/signalr/dist/browser/signalr.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const toggleBtn = document.getElementById("sidebarToggle");
@@ -198,6 +199,28 @@
             $(window).on('popstate', function () {
                 location.reload(); // Reload lại trang để đảm bảo dữ liệu đúng
             });
+        });
+    </script>
+
+    <!-- SignalR for real-time updates on Dashboard -->
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+
+        connection.on("ReceiveDataChange", function () {
+            var currentUrl = window.location.href.toLowerCase();
+
+            if (currentUrl.includes("create") || currentUrl.includes("edit")) {
+                alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+            }
+            else {
+                window.location.reload();
+            }
+        });
+
+        connection.start().then(function () {
+            console.log("SignalR Connected on Dashboard!");
+        }).catch(function (err) {
+            return console.error(err.toString());
         });
     </script>
     

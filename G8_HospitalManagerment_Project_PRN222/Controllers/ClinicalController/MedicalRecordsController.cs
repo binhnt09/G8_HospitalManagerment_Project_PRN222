@@ -8,16 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using G8_HospitalManagerment_Project_PRN222.Hubs;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
 {
     public class MedicalRecordsController : Controller
     {
         private readonly DbHospitalManagementContext _context;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public MedicalRecordsController(DbHospitalManagementContext context)
+        public MedicalRecordsController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // =====================================================================
@@ -218,6 +221,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 //    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Chẩn đoán hình ảnh
                 //    await _hubContext.Clients.Group("ImagingTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
                 //}
+                
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
 
                 TempData["Success"] = "Hồ sơ bệnh án đã được tạo thành công.";
 
@@ -241,13 +246,67 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
         // =====================================================================
 
         // GET: MedicalRecords
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int? pageNumber)
         {
+            // 1. Giữ trạng thái của thanh tìm kiếm và sắp xếp để truyền lại View
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.CurrentFilter = searchString;
+
+            // 2. Query cơ sở kết nối các bảng
             var records = _context.MedicalRecords
+                .Include(m => m.Patient).ThenInclude(p => p.User)
+                .Include(m => m.Doctor).ThenInclude(d => d.Employee).ThenInclude(e => e.User)
                 .Include(m => m.Appointment)
-                .Include(m => m.Doctor)
-                .Include(m => m.Patient);
-            return View(await records.ToListAsync());
+                .AsQueryable();
+
+            // 3. Xử lý Tìm kiếm (Search)
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                records = records.Where(m =>
+                    (m.Patient != null && m.Patient.User != null && (m.Patient.User.FirstName + " " + m.Patient.User.LastName).ToLower().Contains(searchString)) ||
+                    (m.Doctor != null && m.Doctor.Employee != null && m.Doctor.Employee.User != null && (m.Doctor.Employee.User.FirstName + " " + m.Doctor.Employee.User.LastName).ToLower().Contains(searchString)) ||
+                    (m.Diagnosis != null && m.Diagnosis.ToLower().Contains(searchString))
+                );
+            }
+
+            // 4. Xử lý Sắp xếp (Sort)
+            switch (sortOrder)
+            {
+                case "date_desc":
+                    records = records.OrderByDescending(m => m.RecordDate);
+                    break;
+                case "doctor_asc":
+                    records = records.OrderBy(m => m.Doctor.Employee.User.FirstName).ThenBy(m => m.Doctor.Employee.User.LastName);
+                    break;
+                case "patient_asc":
+                    records = records.OrderBy(m => m.Patient.User.FirstName).ThenBy(m => m.Patient.User.LastName);
+                    break;
+                default: // Mặc định sắp xếp ngày tăng dần
+                    records = records.OrderBy(m => m.RecordDate);
+                    break;
+            }
+
+            // 5. Xử lý Phân trang (Pagination)
+            int pageSize = 6;
+            int pageIndex = pageNumber ?? 1;
+            int totalItems = await records.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            ViewBag.CurrentPage = pageIndex;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.ItemStart = totalItems == 0 ? 0 : (pageIndex - 1) * pageSize + 1;
+            ViewBag.ItemEnd = Math.Min(pageIndex * pageSize, totalItems);
+
+            // Lấy dữ liệu của trang hiện tại
+            var pagedData = await records
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return View(pagedData);
         }
 
         // GET: MedicalRecords/Edit/5
@@ -280,6 +339,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 {
                     _context.Update(medicalRecord);
                     await _context.SaveChangesAsync();
+                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -324,6 +384,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 _context.MedicalRecords.Remove(medicalRecord);
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
             return RedirectToAction(nameof(Index));
         }
     }

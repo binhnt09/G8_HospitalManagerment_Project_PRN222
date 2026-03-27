@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Prescriptions";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
 }
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -14,6 +16,30 @@
         <div>
             <h4 class="fw-bold mb-0"><i class="bi bi-file-medical me-2 text-primary"></i>Prescriptions</h4>
             <p class="text-muted small mb-0">All issued medical prescriptions.</p>
+        </div>
+        
+        <form asp-action="Index" method="get" class="d-flex flex-grow-1" style="max-width: 500px;">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
+                <span class="input-group-text bg-transparent border-0 text-muted ps-4">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="searchString" value="@ViewBag.CurrentFilter" class="form-control border-0 shadow-none bg-transparent" placeholder="Search by Doctor, Patient..." aria-label="Search">
+                <button class="btn btn-primary rounded-pill m-1 px-4 fw-medium" type="submit">Search</button>
+            </div>
+            <input type="hidden" name="sortOrder" value="@ViewBag.CurrentSort" />
+        </form>
+
+        <div class="d-flex gap-2">
+            <div class="dropdown shadow-sm rounded-pill">
+                <button class="btn btn-white bg-white border-0 rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium text-dark" type="button" id="sortMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-sort-down text-primary"></i> Sort By
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2" aria-labelledby="sortMenuButton">
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParm" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-calendar-event me-2 text-muted"></i>Prescription Date</a></li>
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="doctor_asc" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-person-badge me-2 text-muted"></i>Doctor Name</a></li>
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="patient_asc" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-person me-2 text-muted"></i>Patient Name</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -34,9 +60,21 @@
                     <thead class="text-muted" style="background-color: #FAFAFA; font-size: 0.85rem; text-transform: uppercase;">
                         <tr>
                             <th class="ps-4 py-3 border-bottom-0 fw-semibold">ID</th>
-                            <th class="py-3 border-bottom-0 fw-semibold">Date</th>
-                            <th class="py-3 border-bottom-0 fw-semibold">Patient</th>
-                            <th class="py-3 border-bottom-0 fw-semibold">Doctor</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">
+                                <a asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParm" asp-route-searchString="@ViewBag.CurrentFilter" class="text-decoration-none text-muted">
+                                    Date <i class="bi bi-arrow-down-up ms-1"></i>
+                                </a>
+                            </th>
+                            <th class="py-3 border-bottom-0 fw-semibold">
+                                <a asp-action="Index" asp-route-sortOrder="patient_asc" asp-route-searchString="@ViewBag.CurrentFilter" class="text-decoration-none text-muted">
+                                    Patient Name <i class="bi bi-arrow-down-up ms-1"></i>
+                                </a>
+                            </th>
+                            <th class="py-3 border-bottom-0 fw-semibold">
+                                <a asp-action="Index" asp-route-sortOrder="doctor_asc" asp-route-searchString="@ViewBag.CurrentFilter" class="text-decoration-none text-muted">
+                                    Doctor Name <i class="bi bi-arrow-down-up ms-1"></i>
+                                </a>
+                            </th>
                             <th class="py-3 border-bottom-0 fw-semibold">Drugs</th>
                             <th class="pe-4 py-3 border-bottom-0 fw-semibold text-end">Actions</th>
                         </tr>
@@ -45,12 +83,14 @@
                         @foreach (var item in Model)
                         {
                             var patientName = item.Patient?.User != null
-                                ? $"{item.Patient.User.FirstName} {item.Patient.User.LastName}"
-                                : $"Patient #{item.PatientId}";
+                                ? $"{item.Patient.User.FirstName ?? ""} {item.Patient.User.LastName ?? ""}".Trim()
+                                : "Unknown Patient";
+                            if (string.IsNullOrEmpty(patientName)) { patientName = "Unknown Patient"; }
 
                             var doctorName = item.Doctor?.Employee?.User != null
-                                ? $"Dr. {item.Doctor.Employee.User.FirstName} {item.Doctor.Employee.User.LastName}"
-                                : $"Doctor #{item.DoctorId}";
+                                ? $"Dr. {item.Doctor.Employee.User.FirstName ?? ""} {item.Doctor.Employee.User.LastName ?? ""}".Trim()
+                                : "Unknown Doctor";
+                            if (string.IsNullOrEmpty(doctorName) || doctorName == "Dr.") { doctorName = "Unknown Doctor"; }
 
                             <tr>
                                 <td class="ps-4 py-3">
@@ -59,8 +99,8 @@
                                     </span>
                                 </td>
                                 <td class="py-3">
-                                    <div class="fw-bold text-dark">@item.PrescriptionDate?.ToString("dd/MM/yyyy")</div>
-                                    <div class="text-muted small">@item.PrescriptionDate?.ToString("HH:mm")</div>
+                                    <div class="fw-bold text-dark">@(item.PrescriptionDate?.ToString("yyyy-MM-dd") ?? "N/A")</div>
+                                    <div class="text-muted small">@(item.PrescriptionDate?.ToString("HH:mm") ?? "")</div>
                                 </td>
                                 <td class="py-3">
                                     <div class="fw-bold text-dark">@patientName</div>
@@ -68,31 +108,21 @@
                                 </td>
                                 <td class="py-3">
                                     <div class="fw-bold text-dark">@doctorName</div>
-                                    <div class="text-muted small">@item.Doctor?.Specialization</div>
+                                    <div class="text-muted small">@(item.Doctor?.Specialization ?? "General")</div>
                                 </td>
                                 <td class="py-3">
                                     <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2">
-                                        <i class="bi bi-capsule me-1"></i>@item.PrescriptionItems.Count(pi => pi.IsDeleted != true) drug(s)
+                                        <i class="bi bi-capsule me-1"></i>@(item.PrescriptionItems?.Count(pi => pi.IsDeleted != true) ?? 0) drug(s)
                                     </span>
                                 </td>
                                 <td class="pe-4 py-3 text-end">
-                                    <a asp-action="Details" asp-route-id="@item.PrescriptionId"
-                                       class="btn btn-sm btn-light text-muted p-2 rounded-circle me-1" title="View">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-
+                                    <a asp-action="Details" asp-route-id="@item.PrescriptionId" class="open-modal-btn btn btn-sm btn-light text-muted p-2 rounded-circle me-1" title="Details"><i class="bi bi-eye"></i></a>
                                     <div class="dropdown d-inline">
-                                        <button class="btn btn-sm btn-light text-muted p-2 rounded-circle"
-                                                type="button" data-bs-toggle="dropdown" title="More">
+                                        <button class="btn btn-sm btn-light text-muted p-2 rounded-circle" type="button" data-bs-toggle="dropdown" title="Options">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1">
-                                            <li>
-                                                <a class="dropdown-item text-danger"
-                                                   asp-action="Delete" asp-route-id="@item.PrescriptionId">
-                                                    <i class="bi bi-trash3 me-2"></i>Delete
-                                                </a>
-                                            </li>
+                                            <li><a class="open-modal-btn dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.PrescriptionId"><i class="bi bi-trash3 me-2"></i>Delete</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -110,10 +140,30 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-4 py-3 border-top text-muted" style="font-size: 0.9rem;">
-                Total: <span class="fw-bold text-dark">@Model.Count()</span> prescription(s)
+            
+            <div class="d-flex justify-content-between align-items-center p-4 border-top">
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    Showing <span class="fw-bold text-dark">@ViewBag.ItemStart</span> to <span class="fw-bold text-dark">@ViewBag.ItemEnd</span> of <span class="fw-bold text-dark">@ViewBag.TotalItems</span> prescriptions
+                </div>
+                
+                @if (totalPages > 1)
+                {
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link rounded-pill border-0 text-muted px-3" asp-action="Index" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-pageNumber="@(currentPage - 1)"><i class="bi bi-chevron-left me-1"></i> Previous</a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link rounded-circle border-0 mx-1 @(i == currentPage ? "bg-primary text-white" : "text-dark")" asp-action="Index" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-pageNumber="@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link rounded-pill border-0 text-muted px-3" asp-action="Index" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-pageNumber="@(currentPage + 1)">Next <i class="bi bi-chevron-right ms-1"></i></a>
+                        </li>
+                    </ul>
+                }
             </div>
         </div>
     </div>
-
 </div>
