@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -241,6 +241,64 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     {
         await _service.DeleteAsync(id);
         return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> MyAppointments()
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return View(new List<Appointment>());
+        }
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Department)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.Employee)
+                    .ThenInclude(e => e.User)
+            .Where(a => a.PatientId == patient.PatientId)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ToListAsync();
+
+        return View(appointments);
+    }
+
+    [HttpPost, ActionName("Cancel")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelAppointment(int id)
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.AppointmentId == id && a.PatientId == patient.PatientId);
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+
+        if (appointment.Status != "Cancelled" && appointment.Status != "Completed")
+        {
+            appointment.Status = "Cancelled";
+            _context.Update(appointment);
+            await _context.SaveChangesAsync();
+        }
+
+        return RedirectToAction(nameof(MyAppointments));
     }
 
     private void LoadDropdowns()

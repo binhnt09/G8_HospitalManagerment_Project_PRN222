@@ -1,0 +1,92 @@
+@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.Appointment>
+
+@{
+    ViewData["Title"] = "My Appointments";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="bi bi-calendar-check me-2"></i>Lịch hẹn của tôi</h2>
+        <a asp-controller="Appointments" asp-action="Book" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-lg me-2"></i> Đặt lịch mới
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="text-muted" style="background-color: #FAFAFA; font-size: 0.85rem; text-transform: uppercase;">
+                        <tr>
+                            <th class="ps-4 py-3 border-bottom-0 fw-semibold">Ngày giờ</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Lý do</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Bác sĩ</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Chuyên khoa</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Tình trạng</th>
+                            <th class="pe-4 py-3 border-bottom-0 fw-semibold text-end">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+                                    Bạn chưa có lịch hẹn nào.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model) {
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="fw-bold text-dark">@item.AppointmentDate.ToString("dd/MM/yyyy")</div>
+                                        <div class="text-muted small">@item.AppointmentDate.ToString("HH:mm")</div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="text-dark">@(string.IsNullOrEmpty(item.Reason) ? "Không có" : item.Reason)</div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark">
+                                            @(item.Doctor?.Employee?.User?.LastName != null ? $"Bs. {item.Doctor?.Employee?.User?.FirstName} {item.Doctor?.Employee?.User?.LastName}" : "Chưa xếp")
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="text-dark">@(item.Department?.DepartmentName ?? "Chưa xếp")</div>
+                                    </td>
+                                    <td class="py-3">
+                                        @if(item.Status == "Completed") {
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Đã khám</span>
+                                        } else if(item.Status == "Confirmed") {
+                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Đã xác nhận</span>
+                                        } else if(item.Status == "Pending") {
+                                            <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-2">Chờ xác nhận</span>
+                                        } else {
+                                            <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">Đã hủy</span>
+                                        }
+                                    </td>
+                                    <td class="pe-4 py-3 text-end">
+                                        @if (item.Status == "Pending" || item.Status == "Confirmed")
+                                        {
+                                            <form asp-action="Cancel" asp-route-id="@item.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch hẹn này không?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                    <i class="bi bi-x-circle me-1"></i> Hủy lịch
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Không thể hủy</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
