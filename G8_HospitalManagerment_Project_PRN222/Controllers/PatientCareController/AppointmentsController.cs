@@ -126,6 +126,13 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ModelState.Remove("Department");
         ModelState.Remove("Doctor");
         ModelState.Remove("Patient");
+
+        if (appointment.AppointmentDate <= DateTime.Now)
+        {
+            ModelState.AddModelError("AppointmentDate", "Appointment date must be in the future.");
+            return View(appointment);
+        }
+
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
