@@ -111,8 +111,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     // GET: /Appointments/Book - simple booking form for logged-in patients
     public IActionResult Book()
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
         {
             return RedirectToAction("Login", "Authentication");
         }
@@ -141,8 +141,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Book([Bind("AppointmentDate,Reason")] Appointment model)
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
         {
             return RedirectToAction("Login", "Authentication");
         }
@@ -156,10 +156,10 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ModelState.Remove("Status");
         
         // Ensure patient record exists for current user
-        var patient = _context.Patients.FirstOrDefault(p => p.UserId == userId.Value);
+        var patient = _context.Patients.FirstOrDefault(p => p.UserId == userId);
         if (patient == null)
         {
-            patient = new Patient { UserId = userId.Value };
+            patient = new Patient { UserId = userId };
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
         }
