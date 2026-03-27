@@ -1,3 +1,4 @@
+﻿using G8_HospitalManagerment_Project_PRN222.Hubs;
 using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.Repository;
 using G8_HospitalManagerment_Project_PRN222.Service;
@@ -78,5 +79,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapHub<G8_HospitalManagerment_Project_PRN222.Hubs.AppointmentHub>("/appointmentHub");
+app.MapHub<DataHub>("/dataHub");
 
 app.Run();

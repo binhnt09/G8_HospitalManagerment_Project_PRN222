@@ -145,6 +145,36 @@
         <script src="~/lib/jquery/dist/jquery.min.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/microsoft/signalr/dist/browser/signalr.js"></script>
+
+        <script>
+            // 1. Kết nối với Đài phát thanh "/dataHub"
+            var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+
+            // 2. Lắng nghe sự kiện có tên là "ReceiveDataChange"
+            connection.on("ReceiveDataChange", function () {
+
+                // --- LOGIC SMART RELOAD CỦA BẠN NẰM Ở ĐÂY ---
+                var currentUrl = window.location.href.toLowerCase();
+
+                // Nếu URL có chứa chữ create hoặc edit (đang gõ form) -> Chỉ hiện thông báo
+                if (currentUrl.includes("create") || currentUrl.includes("edit")) {
+                    // Chỗ này bạn có thể thay alert bằng Toastr hoặc Bootstrap Toast cho đẹp
+                    alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+                }
+                // Nếu đang ở trang Index (danh sách) hoặc Details -> F5 tự động luôn
+                else {
+                    window.location.reload();
+                }
+            });
+
+            // 3. Khởi động kết nối
+            connection.start().then(function () {
+                console.log("SignalR Connected!");
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+        </script>
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 

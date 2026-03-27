@@ -5,17 +5,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Hubs;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
 {
     public class InvoicesController : Controller
     {
         private readonly DbHospitalManagementContext _context;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public InvoicesController(DbHospitalManagementContext context)
+        public InvoicesController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: Invoices
@@ -123,6 +127,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
             {
                 _context.Add(invoice);
                 await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 return RedirectToAction(nameof(Index));
             }
             ViewData["AppointmentId"] = new SelectList(_context.Appointments, "AppointmentId", "AppointmentId", invoice.AppointmentId);
@@ -192,6 +197,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
             {
                 _context.Update(existingInvoice);
                 await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 TempData["SuccessMessage"] = "Invoice updated successfully!";
                 return RedirectToAction(nameof(Details), new { id });
             }
@@ -236,6 +242,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
             }
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
             return RedirectToAction(nameof(Index));
         }
 
@@ -261,14 +268,24 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
             if (appointment == null)
                 return NotFound();
 
-            // ── Step 1b: Guard – redirect if an invoice already exists ────────────
+            // ── Step 1b: Check existing invoice ────────────
             var existingInvoice = await _context.Invoices
+                .Include(i => i.InvoiceItems)
                 .FirstOrDefaultAsync(i => i.AppointmentId == appointmentId);
 
             if (existingInvoice != null)
             {
-                TempData["InfoMessage"] = "An invoice for this appointment already exists.";
-                return RedirectToAction(nameof(Details), new { id = existingInvoice.InvoiceId });
+                if (existingInvoice.Status == "Paid" || existingInvoice.Status == "Cancelled")
+                {
+                    TempData["ErrorMessage"] = "This appointment already has a Paid or Cancelled invoice. Cannot regenerate.";
+                    return RedirectToAction(nameof(Details), new { id = existingInvoice.InvoiceId });
+                }
+                
+                if (existingInvoice.Status == "Unpaid")
+                {
+                    _context.InvoiceItems.RemoveRange(existingInvoice.InvoiceItems);
+                    existingInvoice.TotalAmount = 0;
+                }
             }
 
             // ── Step 2 + 3: Build the Invoice and its line items inside a transaction
@@ -287,37 +304,52 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.BillingController
                 invoiceItems.AddRange(BuildPharmacyItems(appointment));
 
                 // ── Step 4: Totals ────────────────────────────────────────────────
-                decimal discount = 0m;
+                decimal discount = existingInvoice?.Discount ?? 0m;
                 decimal totalAmount = invoiceItems.Sum(i => i.TotalPrice);
                 decimal finalAmount = totalAmount - discount;
 
-                var invoice = new Invoice
-                {
-                    PatientId     = appointment.PatientId,
-                    AppointmentId = appointment.AppointmentId,
-                    Status        = "Unpaid",
-                    IssueDate     = DateTime.Now,
-                    CreatedAt     = DateTime.Now,
-                    Discount      = discount,
-                    TotalAmount   = totalAmount,
-                    FinalAmount   = finalAmount
-                };
+                Invoice invoiceToSave;
 
-                _context.Invoices.Add(invoice);
-                await _context.SaveChangesAsync(); // invoice.InvoiceId is now populated
+                if (existingInvoice != null)
+                {
+                    existingInvoice.TotalAmount = totalAmount;
+                    existingInvoice.FinalAmount = finalAmount;
+                    existingInvoice.UpdatedAt = DateTime.Now;
+                    _context.Invoices.Update(existingInvoice);
+                    invoiceToSave = existingInvoice;
+                }
+                else
+                {
+                    invoiceToSave = new Invoice
+                    {
+                        PatientId     = appointment.PatientId,
+                        AppointmentId = appointment.AppointmentId,
+                        Status        = "Unpaid",
+                        IssueDate     = DateTime.Now,
+                        CreatedAt     = DateTime.Now,
+                        Discount      = discount,
+                        TotalAmount   = totalAmount,
+                        FinalAmount   = finalAmount
+                    };
+                    _context.Invoices.Add(invoiceToSave);
+                }
+
+                await _context.SaveChangesAsync(); // invoice.InvoiceId is now populated for new
 
                 // Attach the InvoiceId to every line item before inserting
                 foreach (var item in invoiceItems)
-                    item.InvoiceId = invoice.InvoiceId;
+                    item.InvoiceId = invoiceToSave.InvoiceId;
 
                 _context.InvoiceItems.AddRange(invoiceItems);
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+
                 // ── Step 5: Redirect to the new invoice's Details page ────────────
-                TempData["SuccessMessage"] = "Invoice generated successfully!";
-                return RedirectToAction(nameof(Details), new { id = invoice.InvoiceId });
+                TempData["SuccessMessage"] = "Invoice generated/updated successfully with the latest medical records!";
+                return RedirectToAction(nameof(Details), new { id = invoiceToSave.InvoiceId });
             }
             catch
             {
