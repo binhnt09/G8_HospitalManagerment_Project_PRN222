@@ -1,78 +1,79 @@
-﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.Doctor>
+﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.ViewModels.DoctorViewModel>
 
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
-
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
+<div class="card p-3 mb-4 shadow-sm">
+    <form asp-action="Index" method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Tìm theo tên</label>
+            <input type="text" name="searchName" value="@ViewBag.SearchName" class="form-control" placeholder="Nhập tên bác sĩ...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Chuyên khoa</label>
+            <input type="text" name="specialty" value="@ViewBag.Specialty" class="form-control" placeholder="Ví dụ: Nội khoa">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Kinh nghiệm (năm)</label>
+            <input type="number" name="minExp" value="@ViewBag.MinExp" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Lọc dữ liệu TCP</button>
+        </div>
+    </form>
+</div>
+<table class="table table-bordered table-hover">
+    <thead class="table-primary">
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Specialization)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.YearsExperience)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LicenseNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DeletedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsDeleted)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Employee)
-            </th>
-            <th></th>
+            <th>ID</th>
+            <th>Mã NV</th>
+            <th>Bác sĩ</th>
+            <th>Chuyên khoa</th>
+            <th>Kinh nghiệm</th>
+            <th>Số giấy phép</th>
+            <th>Ngày tạo</th>
+            <th>Cập nhật</th>
+            <th>Trạng thái</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Specialization)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.YearsExperience)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LicenseNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsDeleted)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Employee.EmployeeId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.DoctorId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.DoctorId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.DoctorId">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.DoctorId</td>
+                <td>@item.EmployeeCode</td>
+                <td><strong>@item.FullName</strong></td>
+                <td>@item.Specialization</td>
+                <td>@(item.YearsExperience ?? 0) năm</td>
+                <td>@item.LicenseNumber</td>
+                <td>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    @if (item.IsDeleted == true)
+                    {
+                        <span class="badge bg-danger">Đã xóa</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+<script>
+    // Ép tắt tất cả spinner ngay khi HTML vừa được nạp xong (không đợi CSS/Images)
+    (function() {
+        console.log("Forcing spinner to hide...");
+        var style = document.createElement('style');
+        style.innerHTML = `
+            .loading-spinner, .preloader, [class*="spinner-"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+        `;
+        document.head.appendChild(style);
+    })();
+</script>

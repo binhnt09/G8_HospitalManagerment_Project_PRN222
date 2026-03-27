@@ -1,28 +1,99 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using G8_HospitalManagerment_Project_PRN222.Models;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.HRController
 {
     public class DoctorsController : Controller
     {
-        private readonly DbHospitalManagementContext _context;
+        private readonly DbHospitalManagementContext _context; 
+        private readonly HttpClient _httpClient;
 
         public DoctorsController(DbHospitalManagementContext context)
         {
             _context = context;
+            _httpClient = new HttpClient();
         }
 
         // GET: Doctors
-        public async Task<IActionResult> Index()
+        [AllowAnonymous]
+        // Hàm gọi Server TCP
+        public async Task<List<DoctorViewModel>> FetchDoctorsFromServer(string name = "", string spec = "", int exp = 0)
         {
-            var dbHospitalManagementContext = _context.Doctors.Include(d => d.Employee);
-            return View(await dbHospitalManagementContext.ToListAsync());
+            try
+            {
+                using (TcpClient client = new TcpClient("127.0.0.1", 13000))
+                using (NetworkStream stream = client.GetStream())
+                {
+                    // 1. Gửi lệnh lọc (Định dạng tự định nghĩa)
+                    string command = $"FILTER|name={name};spec={spec};exp={exp}";
+                    byte[] cmdBytes = Encoding.UTF8.GetBytes(command);
+                    await stream.WriteAsync(cmdBytes, 0, cmdBytes.Length);
+                    await stream.FlushAsync();
+
+                    // 2. Đọc Header độ dài (4 byte)
+                    byte[] header = new byte[4];
+                    int hRead = 0;
+                    while (hRead < 4)
+                    {
+                        int r = await stream.ReadAsync(header, hRead, 4 - hRead);
+                        if (r == 0) return null;
+                        hRead += r;
+                    }
+                    int dataSize = BitConverter.ToInt32(header, 0);
+
+                    // 3. Đọc dữ liệu JSON (Body)
+                    byte[] buffer = new byte[dataSize];
+                    int bRead = 0;
+                    while (bRead < dataSize)
+                    {
+                        int r = await stream.ReadAsync(buffer, bRead, dataSize - bRead);
+                        if (r == 0) break;
+                        bRead += r;
+                    }
+
+                    string json = Encoding.UTF8.GetString(buffer);
+                    return JsonConvert.DeserializeObject<List<DoctorViewModel>>(json);
+                }
+            }
+            catch { return new List<DoctorViewModel>(); }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Index(string searchName = "", string specialty = "", int minExp = 0)
+        {
+            // Gọi hàm TCP với các tham số (nếu rỗng thì TCP Server sẽ trả về ALL)
+            var doctors = await FetchDoctorsFromServer(searchName, specialty, minExp);
+
+            // In Log để kiểm tra giá trị nhận được từ Form
+            Console.WriteLine($"Search: {searchName}, Spec: {specialty}, Exp: {minExp}");
+
+            if (doctors != null)
+            {
+                Console.WriteLine($"Đã lấy được {doctors.Count} bác sĩ từ TCP");
+
+                // Lưu lại để hiển thị trên Form
+                ViewBag.SearchName = searchName;
+                ViewBag.Specialty = specialty;
+                ViewBag.MinExp = minExp;
+
+                return View(doctors);
+            }
+
+            Console.WriteLine("Không lấy được dữ liệu từ TCP Server");
+            return View(new List<DoctorViewModel>());
         }
 
         // GET: Doctors/Details/5
