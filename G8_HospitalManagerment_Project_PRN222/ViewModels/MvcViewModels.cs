@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace G8_HospitalManagerment_Project_PRN222.Models.ViewModels
+namespace G8_HospitalManagerment_Project_PRN222.ViewModels
 {
     // ─────────────────────────────────────────────────────────────────────────
     // Feature 1 — Xem chi tiết hồ sơ bệnh án (Details view model)

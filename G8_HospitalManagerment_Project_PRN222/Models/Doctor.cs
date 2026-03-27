@@ -27,9 +27,17 @@ public partial class Doctor
 
     public virtual Employee Employee { get; set; } = null!;
 
+    public virtual ICollection<ImagingOrder> ImagingOrders { get; set; } = new List<ImagingOrder>();
+
+    public virtual ICollection<InpatientAdmission> InpatientAdmissions { get; set; } = new List<InpatientAdmission>();
+
     public virtual ICollection<LabOrder> LabOrders { get; set; } = new List<LabOrder>();
 
     public virtual ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
 
     public virtual ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
+
+    public virtual ICollection<SurgerySchedule> SurgeryScheduleAnesthesiologists { get; set; } = new List<SurgerySchedule>();
+
+    public virtual ICollection<SurgerySchedule> SurgeryScheduleMainSurgeons { get; set; } = new List<SurgerySchedule>();
 }

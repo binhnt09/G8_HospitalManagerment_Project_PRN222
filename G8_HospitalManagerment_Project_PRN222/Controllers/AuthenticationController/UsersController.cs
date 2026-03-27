@@ -1,5 +1,5 @@
 ﻿using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using G8_HospitalManagerment_Project_PRN222.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;

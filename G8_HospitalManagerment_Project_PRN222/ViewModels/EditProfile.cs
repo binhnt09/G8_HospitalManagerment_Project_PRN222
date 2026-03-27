@@ -1,4 +1,4 @@
-﻿namespace G8_HospitalManagerment_Project_PRN222.Models.ViewModels
+﻿namespace G8_HospitalManagerment_Project_PRN222.ViewModels
 {
     public class EditProfile
     {
