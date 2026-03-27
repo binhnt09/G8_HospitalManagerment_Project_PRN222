@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,58 +72,36 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         }
 
         // GET: PrescriptionItems/Edit/5
+        // BUSINESS RULE: Individual prescription items are immutable after creation.
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            // Fetch the item only to know which prescription to redirect back to
+            var item = id.HasValue ? await _context.PrescriptionItems.FindAsync(id.Value) : null;
+            int? prescriptionId = item?.PrescriptionId;
 
-            var prescriptionItem = await _context.PrescriptionItems.FindAsync(id);
-            if (prescriptionItem == null)
-            {
-                return NotFound();
-            }
-            ViewData["DrugId"] = new SelectList(_context.Drugs, "DrugId", "DrugId", prescriptionItem.DrugId);
-            ViewData["PrescriptionId"] = new SelectList(_context.Prescriptions, "PrescriptionId", "PrescriptionId", prescriptionItem.PrescriptionId);
-            return View(prescriptionItem);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+
+            if (prescriptionId.HasValue)
+                return RedirectToAction("Details", "Prescriptions", new { id = prescriptionId.Value });
+
+            return RedirectToAction("Index", "Prescriptions");
         }
 
         // POST: PrescriptionItems/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // BUSINESS RULE: Individual prescription items are immutable after creation.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PrescriptionItemId,PrescriptionId,DrugId,Quantity,Dosage,DurationDays,UsageInstructions,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] PrescriptionItem prescriptionItem)
+        public async Task<IActionResult> Edit(int id, PrescriptionItem prescriptionItem)
         {
-            if (id != prescriptionItem.PrescriptionItemId)
-            {
-                return NotFound();
-            }
+            var item = await _context.PrescriptionItems.FindAsync(id);
+            int? prescriptionId = item?.PrescriptionId;
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(prescriptionItem);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PrescriptionItemExists(prescriptionItem.PrescriptionItemId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["DrugId"] = new SelectList(_context.Drugs, "DrugId", "DrugId", prescriptionItem.DrugId);
-            ViewData["PrescriptionId"] = new SelectList(_context.Prescriptions, "PrescriptionId", "PrescriptionId", prescriptionItem.PrescriptionId);
-            return View(prescriptionItem);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+
+            if (prescriptionId.HasValue)
+                return RedirectToAction("Details", "Prescriptions", new { id = prescriptionId.Value });
+
+            return RedirectToAction("Index", "Prescriptions");
         }
 
         // GET: PrescriptionItems/Delete/5
@@ -152,13 +130,23 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var prescriptionItem = await _context.PrescriptionItems.FindAsync(id);
+            int? prescriptionId = prescriptionItem?.PrescriptionId;
+
             if (prescriptionItem != null)
             {
-                _context.PrescriptionItems.Remove(prescriptionItem);
+                // Soft delete — keep for audit trail
+                prescriptionItem.IsDeleted = true;
+                prescriptionItem.DeletedAt = DateTime.Now;
+                _context.Update(prescriptionItem);
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = "Drug removed from prescription successfully.";
+
+            if (prescriptionId.HasValue)
+                return RedirectToAction("Details", "Prescriptions", new { id = prescriptionId.Value });
+
+            return RedirectToAction("Index", "Prescriptions");
         }
 
         private bool PrescriptionItemExists(int id)

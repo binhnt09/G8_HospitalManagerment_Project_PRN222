@@ -20,4 +20,6 @@ public partial class Service
     public DateTime? DeletedAt { get; set; }
 
     public bool? IsDeleted { get; set; }
+
+    public virtual ICollection<ImagingOrder> ImagingOrders { get; set; } = new List<ImagingOrder>();
 }

@@ -1,84 +1,209 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Invoice
+@model G8_HospitalManagerment_Project_PRN222.Models.Invoice
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = $"Invoice #{Model.InvoiceId}";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var patientName = Model.Patient?.User != null
+        ? $"{Model.Patient.User.FirstName} {Model.Patient.User.LastName}"
+        : $"Patient #{Model.PatientId}";
+
+    var patientPhone = Model.Patient?.User?.Phone ?? "N/A";
+
+    var statusBadge = Model.Status switch
+    {
+        "Paid"      => "bg-success",
+        "Cancelled" => "bg-danger",
+        _           => "bg-warning text-dark"
+    };
 }
 
-<h1>Details</h1>
+<style>
+    @@media print {
+        .no-print { display: none !important; }
+        body { background: white !important; }
+        .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    }
+</style>
 
-<div>
-    <h4>Invoice</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TotalAmount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TotalAmount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Discount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Discount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FinalAmount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FinalAmount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IssueDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IssueDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DeletedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DeletedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsDeleted)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsDeleted)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Appointment)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Appointment.AppointmentId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Patient)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Patient.PatientId)
-        </dd>
-    </dl>
+<div class="no-print mb-3 d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a asp-action="Index">Invoices</a></li>
+            <li class="breadcrumb-item active">Invoice #@Model.InvoiceId</li>
+        </ol>
+    </nav>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.InvoiceId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-3 no-print" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="container" style="max-width: 900px;">
+    <div class="card shadow-sm border-0 p-4">
+
+        @* ══ HEADER ══ *@
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-7">
+                <h4 class="fw-bold text-primary mb-0">
+                    <i class="bi bi-hospital me-2"></i>G8 Hospital
+                </h4>
+                <p class="text-muted small mb-0">123 Nguyen Van Linh, Danang City, Vietnam</p>
+                <p class="text-muted small">📞 (+84) 236-3999-888</p>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <h5 class="fw-bold text-uppercase text-secondary letter-spacing">Invoice / Medical Receipt</h5>
+                <p class="mb-1">
+                    <span class="text-muted">Invoice No:</span>
+                    <strong>#@Model.InvoiceId</strong>
+                </p>
+                <p class="mb-1">
+                    <span class="text-muted">Date:</span>
+                    <strong>@Model.IssueDate?.ToString("dd/MM/yyyy")</strong>
+                </p>
+                <p class="mb-0">
+                    <span class="text-muted">Status:</span>
+                    <span class="badge @statusBadge ms-1">@Model.Status</span>
+                </p>
+            </div>
+        </div>
+
+        <hr class="border-2" />
+
+        @* ══ PATIENT INFO ══ *@
+        <div class="row mb-4 g-3">
+            <div class="col-12">
+                <h6 class="text-uppercase text-muted fw-semibold small mb-3">
+                    <i class="bi bi-person-fill me-1"></i>Patient Information
+                </h6>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100 bg-light">
+                    <div class="text-muted small mb-1">Patient Name</div>
+                    <div class="fw-semibold">@patientName</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100 bg-light">
+                    <div class="text-muted small mb-1">Phone</div>
+                    <div class="fw-semibold">@patientPhone</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100 bg-light">
+                    <div class="text-muted small mb-1">Appointment Date</div>
+                    <div class="fw-semibold">
+                        @(Model.Appointment?.AppointmentDate.ToString("dd/MM/yyyy") ?? "N/A")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ══ INVOICE ITEMS TABLE ══ *@
+        <h6 class="text-uppercase text-muted fw-semibold small mb-2">
+            <i class="bi bi-list-ul me-1"></i>Services & Items
+        </h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width:40px" class="text-center">#</th>
+                        <th>Item Name</th>
+                        <th style="width:120px">Type</th>
+                        <th style="width:60px" class="text-center">Qty</th>
+                        <th style="width:160px" class="text-end">Unit Price</th>
+                        <th style="width:160px" class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{int rowNum = 1;}
+                    @foreach (var item in Model.InvoiceItems.Where(i => i.IsDeleted != true))
+                    {
+                        var typeBadge = item.ItemType switch
+                        {
+                            "Pharmacy" => "bg-info text-dark",
+                            "LabTest"  => "bg-dark text-white",
+                            _          => "bg-secondary"           // Service
+                        };
+
+                        <tr>
+                            <td class="text-center text-muted">@(rowNum++)</td>
+                            <td>@item.ItemName</td>
+                            <td>
+                                <span class="badge @typeBadge">@item.ItemType</span>
+                            </td>
+                            <td class="text-center">@item.Quantity</td>
+                            <td class="text-end">@item.UnitPrice.ToString("N0") VND</td>
+                            <td class="text-end fw-semibold">@item.TotalPrice.ToString("N0") VND</td>
+                        </tr>
+                    }
+                    @if (!Model.InvoiceItems.Any(i => i.IsDeleted != true))
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">No items found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* ══ TOTALS SUMMARY ══ *@
+        <div class="row justify-content-end mb-4">
+            <div class="col-md-5">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted">Subtotal</td>
+                        <td class="text-end">@Model.TotalAmount.ToString("N0") VND</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Discount</td>
+                        <td class="text-end text-danger">- @((Model.Discount ?? 0).ToString("N0")) VND</td>
+                    </tr>
+                    <tr class="table-active border-top border-2">
+                        <td class="fw-bold fs-5">Total Due</td>
+                        <td class="text-end fw-bold fs-5 text-primary">
+                            @Model.FinalAmount.ToString("N0") VND
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <hr />
+
+        @* ══ ACTION FOOTER ══ *@
+        <div class="d-flex justify-content-between align-items-center no-print">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+            <div class="d-flex gap-2">
+                @if (Model.Status == "Unpaid")
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.InvoiceId" class="btn btn-outline-warning">
+                        <i class="bi bi-pencil me-1"></i> Edit
+                    </a>
+                }
+                else
+                {
+                    <span class="btn btn-outline-secondary disabled" title="Invoice is locked">
+                        <i class="bi bi-lock-fill me-1"></i> Locked
+                    </span>
+                }
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> Print Invoice
+                </button>
+            </div>
+        </div>
+
+        @* ══ PRINT FOOTER ══ *@
+        <div class="d-none d-print-block text-center text-muted small mt-4">
+            <p class="mb-0">Thank you for choosing G8 Hospital. Get well soon! 💙</p>
+            <p class="mb-0">This is a computer-generated document. No signature is required.</p>
+        </div>
+
+    </div>
 </div>

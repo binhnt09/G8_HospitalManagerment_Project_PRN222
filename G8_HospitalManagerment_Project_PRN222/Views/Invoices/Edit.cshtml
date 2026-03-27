@@ -1,84 +1,144 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Invoice
+@model G8_HospitalManagerment_Project_PRN222.Models.Invoice
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = $"Edit Invoice #{Model.InvoiceId}";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var patientName = Model.Patient?.User != null
+        ? $"{Model.Patient.User.FirstName} {Model.Patient.User.LastName}"
+        : $"Patient #{Model.PatientId}";
 }
 
-<h1>Edit</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-<h4>Invoice</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="InvoiceId" />
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class="form-control" asp-items="ViewBag.PatientId"></select>
-                <span asp-validation-for="PatientId" class="text-danger"></span>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+
+    @* Breadcrumb *@
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Invoices</a></li>
+            <li class="breadcrumb-item">
+                <a asp-action="Details" asp-route-id="@Model.InvoiceId">Invoice #@Model.InvoiceId</a>
+            </li>
+            <li class="breadcrumb-item active">Edit</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4" style="max-width: 600px; margin: auto;">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="rounded-circle d-flex justify-content-center align-items-center"
+                     style="width: 46px; height: 46px; background-color: #E8F0FE; color: #1A73E8; flex-shrink: 0;">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Edit Invoice</h5>
+                    <p class="text-muted small mb-0">Only Discount and Status can be modified.</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="AppointmentId" class="control-label"></label>
-                <select asp-for="AppointmentId" class="form-control" asp-items="ViewBag.AppointmentId"></select>
-                <span asp-validation-for="AppointmentId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TotalAmount" class="control-label"></label>
-                <input asp-for="TotalAmount" class="form-control" />
-                <span asp-validation-for="TotalAmount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Discount" class="control-label"></label>
-                <input asp-for="Discount" class="form-control" />
-                <span asp-validation-for="Discount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FinalAmount" class="control-label"></label>
-                <input asp-for="FinalAmount" class="form-control" />
-                <span asp-validation-for="FinalAmount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IssueDate" class="control-label"></label>
-                <input asp-for="IssueDate" class="form-control" />
-                <span asp-validation-for="IssueDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsDeleted" class="control-label"></label>
-                <input asp-for="IsDeleted" class="form-control" />
-                <span asp-validation-for="IsDeleted" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" style="display:none;"></div>
+
+                @* Hidden fields to preserve bound model values *@
+                <input type="hidden" asp-for="InvoiceId" />
+                <input type="hidden" asp-for="PatientId" />
+                <input type="hidden" asp-for="AppointmentId" />
+                <input type="hidden" asp-for="TotalAmount" />
+                <input type="hidden" asp-for="FinalAmount" />
+                <input type="hidden" asp-for="IssueDate" />
+                <input type="hidden" asp-for="CreatedAt" />
+
+                @* ── READ-ONLY SECTION  ── *@
+                <p class="text-uppercase text-muted fw-semibold mb-2" style="font-size: 0.78rem; letter-spacing: .05em;">
+                    Invoice Information
+                </p>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <label class="form-label text-muted small mb-1">Invoice ID</label>
+                        <div class="form-control bg-light text-dark border-0">#@Model.InvoiceId</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted small mb-1">Issue Date</label>
+                        <div class="form-control bg-light text-dark border-0">
+                            @Model.IssueDate?.ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+                    <div class="col-7">
+                        <label class="form-label text-muted small mb-1">Patient</label>
+                        <div class="form-control bg-light text-dark border-0">@patientName</div>
+                    </div>
+                    <div class="col-5">
+                        <label class="form-label text-muted small mb-1">Subtotal</label>
+                        <div class="form-control bg-light text-dark border-0 fw-semibold">
+                            @Model.TotalAmount.ToString("N0") VND
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mb-4" />
+
+                @* ── EDITABLE SECTION ── *@
+                <p class="text-uppercase text-muted fw-semibold mb-3" style="font-size: 0.78rem; letter-spacing: .05em;">
+                    Editable Fields
+                </p>
+
+                @* Discount *@
+                <div class="mb-3">
+                    <label asp-for="Discount" class="form-label fw-semibold">
+                        <i class="bi bi-tag me-1 text-primary"></i>Discount (VND)
+                    </label>
+                    <input asp-for="Discount" type="number" min="0" step="1000"
+                           class="form-control"
+                           placeholder="0" />
+                    <span asp-validation-for="Discount" class="text-danger small"></span>
+                    <div class="form-text">Enter a discount amount. Leave at 0 for no discount.</div>
+                </div>
+
+                @* Status *@
+                <div class="mb-4">
+                    <label asp-for="Status" class="form-label fw-semibold">
+                        <i class="bi bi-circle-half me-1 text-primary"></i>Status
+                    </label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Unpaid"    selected="@(Model.Status == "Unpaid")">🟡 Unpaid</option>
+                        <option value="Paid"      selected="@(Model.Status == "Paid")">🟢 Paid</option>
+                        <option value="Cancelled" selected="@(Model.Status == "Cancelled")">🔴 Cancelled</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger small"></span>
+                </div>
+
+                @* Action buttons *@
+                <div class="d-flex justify-content-between align-items-center pt-2">
+                    <a asp-action="Details" asp-route-id="@Model.InvoiceId"
+                       class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Invoice
+                    </a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-floppy me-1"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+        // Auto-compute FinalAmount preview when Discount changes
+        const discountInput = document.getElementById('Discount');
+        const totalAmount   = @Model.TotalAmount;
+        const finalInput    = document.querySelector('input[name="FinalAmount"]');
+
+        if (discountInput && finalInput) {
+            discountInput.addEventListener('input', function () {
+                const discount = parseFloat(this.value) || 0;
+                finalInput.value = Math.max(0, totalAmount - discount);
+            });
+        }
+    </script>
 }

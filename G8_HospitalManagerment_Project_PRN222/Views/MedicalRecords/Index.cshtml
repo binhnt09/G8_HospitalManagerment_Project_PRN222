@@ -89,6 +89,11 @@
                 <a asp-action="Edit" asp-route-id="@item.RecordId">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.RecordId">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.RecordId">Delete</a>
+                    <a asp-controller="Invoices" asp-action="GenerateInvoice"
+                       asp-route-appointmentId="@item.AppointmentId"
+                       class="btn btn-primary">
+                        Generate Invoice
+                    </a>
             </td>
         </tr>
 }

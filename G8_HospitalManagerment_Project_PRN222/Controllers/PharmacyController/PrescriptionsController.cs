@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using G8_HospitalManagerment_Project_PRN222.ViewModels;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
 {
@@ -197,9 +197,15 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         public async Task<IActionResult> Index()
         {
             var prescriptions = _context.Prescriptions
+                .Where(p => p.IsDeleted != true)
+                .Include(p => p.Patient)
+                    .ThenInclude(p => p.User)
                 .Include(p => p.Doctor)
+                    .ThenInclude(d => d.Employee)
+                        .ThenInclude(e => e.User)
                 .Include(p => p.MedicalRecord)
-                .Include(p => p.Patient);
+                .Include(p => p.PrescriptionItems)
+                .OrderByDescending(p => p.PrescriptionDate);
             return View(await prescriptions.ToListAsync());
         }
 
@@ -210,9 +216,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
                 return NotFound();
 
             var prescription = await _context.Prescriptions
-                .Include(p => p.Doctor)
-                .Include(p => p.MedicalRecord)
                 .Include(p => p.Patient)
+                    .ThenInclude(p => p.User)
+                .Include(p => p.Doctor)
+                    .ThenInclude(d => d.Employee)
+                        .ThenInclude(e => e.User)
+                .Include(p => p.MedicalRecord)
+                .Include(p => p.PrescriptionItems.Where(pi => pi.IsDeleted != true))
+                    .ThenInclude(pi => pi.Drug)
                 .FirstOrDefaultAsync(m => m.PrescriptionId == id);
 
             if (prescription == null)
@@ -222,49 +233,21 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         }
 
         // GET: Prescriptions/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // BUSINESS RULE: Prescriptions are immutable after creation.
+        public IActionResult Edit(int? id)
         {
-            if (id == null)
-                return NotFound();
-
-            var prescription = await _context.Prescriptions.FindAsync(id);
-            if (prescription == null)
-                return NotFound();
-
-            ViewData["DoctorId"]        = new SelectList(_context.Doctors, "DoctorId", "DoctorId", prescription.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", prescription.MedicalRecordId);
-            ViewData["PatientId"]       = new SelectList(_context.Patients, "PatientId", "PatientId", prescription.PatientId);
-            return View(prescription);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Prescriptions/Edit/5
+        // BUSINESS RULE: Prescriptions are immutable after creation.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PrescriptionId,MedicalRecordId,PatientId,DoctorId,PrescriptionDate,DoctorAdvice,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] Prescription prescription)
+        public IActionResult Edit(int id, Prescription prescription)
         {
-            if (id != prescription.PrescriptionId)
-                return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(prescription);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Prescriptions.Any(e => e.PrescriptionId == prescription.PrescriptionId))
-                        return NotFound();
-                    throw;
-                }
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewData["DoctorId"]        = new SelectList(_context.Doctors, "DoctorId", "DoctorId", prescription.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", prescription.MedicalRecordId);
-            ViewData["PatientId"]       = new SelectList(_context.Patients, "PatientId", "PatientId", prescription.PatientId);
-            return View(prescription);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Prescriptions/Delete/5
@@ -292,9 +275,15 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         {
             var prescription = await _context.Prescriptions.FindAsync(id);
             if (prescription != null)
-                _context.Prescriptions.Remove(prescription);
+            {
+                // Soft delete — preserve the record for audit/billing history
+                prescription.IsDeleted = true;
+                prescription.DeletedAt = DateTime.Now;
+                _context.Update(prescription);
+            }
 
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Prescription deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
     }
