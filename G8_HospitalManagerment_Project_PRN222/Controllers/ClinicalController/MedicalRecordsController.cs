@@ -8,16 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using G8_HospitalManagerment_Project_PRN222.Hubs;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
 {
     public class MedicalRecordsController : Controller
     {
         private readonly DbHospitalManagementContext _context;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public MedicalRecordsController(DbHospitalManagementContext context)
+        public MedicalRecordsController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // =====================================================================
@@ -228,6 +231,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 //    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Chẩn đoán hình ảnh
                 //    await _hubContext.Clients.Group("ImagingTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
                 //}
+                
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
 
                 TempData["Success"] = "Hồ sơ bệnh án đã được tạo thành công.";
 
@@ -394,8 +399,20 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
 
             try
             {
-                _context.Update(existingRecord);
-                await _context.SaveChangesAsync(); // Lưu chẩn đoán vào DB
+                try
+                {
+                    _context.Update(medicalRecord);
+                    await _context.SaveChangesAsync();
+                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.MedicalRecords.Any(e => e.RecordId == medicalRecord.RecordId))
+                        return NotFound();
+                    throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
 
                 TempData["Success"] = "Đã lưu chẩn đoán. Đang chuyển hướng...";
 
@@ -457,6 +474,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 _context.MedicalRecords.Remove(medicalRecord);
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
             return RedirectToAction(nameof(Index));
         }
     }
