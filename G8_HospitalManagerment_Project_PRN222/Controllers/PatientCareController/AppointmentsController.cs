@@ -202,7 +202,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
 
         await _service.CreateAsync(appointment);
 
-        return RedirectToAction("Index");
+        return RedirectToAction("MyAppointments");
     }
 
     public async Task<IActionResult> Edit(int? id)
