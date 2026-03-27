@@ -1,84 +1,119 @@
-﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.Prescription>
+@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.Prescription>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Prescriptions";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h1>Index</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.PrescriptionDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DoctorAdvice)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DeletedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsDeleted)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Doctor)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MedicalRecord)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Patient)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.PrescriptionDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DoctorAdvice)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsDeleted)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Doctor.DoctorId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MedicalRecord.RecordId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Patient.PatientId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.PrescriptionId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.PrescriptionId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.PrescriptionId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+
+    @* ── Top bar ── *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold mb-0"><i class="bi bi-file-medical me-2 text-primary"></i>Prescriptions</h4>
+            <p class="text-muted small mb-0">All issued medical prescriptions.</p>
+        </div>
+    </div>
+
+    @* ── Alerts ── *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* ── Data Table ── *@
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                    <thead class="text-muted" style="background-color: #FAFAFA; font-size: 0.85rem; text-transform: uppercase;">
+                        <tr>
+                            <th class="ps-4 py-3 border-bottom-0 fw-semibold">ID</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Date</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Patient</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Doctor</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Drugs</th>
+                            <th class="pe-4 py-3 border-bottom-0 fw-semibold text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @foreach (var item in Model)
+                        {
+                            var patientName = item.Patient?.User != null
+                                ? $"{item.Patient.User.FirstName} {item.Patient.User.LastName}"
+                                : $"Patient #{item.PatientId}";
+
+                            var doctorName = item.Doctor?.Employee?.User != null
+                                ? $"Dr. {item.Doctor.Employee.User.FirstName} {item.Doctor.Employee.User.LastName}"
+                                : $"Doctor #{item.DoctorId}";
+
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2">
+                                        #@item.PrescriptionId
+                                    </span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="fw-bold text-dark">@item.PrescriptionDate?.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted small">@item.PrescriptionDate?.ToString("HH:mm")</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="fw-bold text-dark">@patientName</div>
+                                    <div class="text-muted small">ID: @item.PatientId</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="fw-bold text-dark">@doctorName</div>
+                                    <div class="text-muted small">@item.Doctor?.Specialization</div>
+                                </td>
+                                <td class="py-3">
+                                    <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2">
+                                        <i class="bi bi-capsule me-1"></i>@item.PrescriptionItems.Count(pi => pi.IsDeleted != true) drug(s)
+                                    </span>
+                                </td>
+                                <td class="pe-4 py-3 text-end">
+                                    <a asp-action="Details" asp-route-id="@item.PrescriptionId"
+                                       class="btn btn-sm btn-light text-muted p-2 rounded-circle me-1" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    <div class="dropdown d-inline">
+                                        <button class="btn btn-sm btn-light text-muted p-2 rounded-circle"
+                                                type="button" data-bs-toggle="dropdown" title="More">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1">
+                                            <li>
+                                                <a class="dropdown-item text-danger"
+                                                   asp-action="Delete" asp-route-id="@item.PrescriptionId">
+                                                    <i class="bi bi-trash3 me-2"></i>Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-file-medical fs-1 d-block mb-2"></i>
+                                    No prescriptions found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-4 py-3 border-top text-muted" style="font-size: 0.9rem;">
+                Total: <span class="fw-bold text-dark">@Model.Count()</span> prescription(s)
+            </div>
+        </div>
+    </div>
+
+</div>
