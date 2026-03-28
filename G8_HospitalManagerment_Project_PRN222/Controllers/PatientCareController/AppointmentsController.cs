@@ -130,7 +130,23 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         if (appointment.AppointmentDate <= DateTime.Now)
         {
             ModelState.AddModelError("AppointmentDate", "Appointment date must be in the future.");
+            LoadDropdowns();
             return View(appointment);
+        }
+
+        if (appointment.DoctorId.HasValue)
+        {
+            var isConflict = await _context.Appointments
+                .AnyAsync(a => a.DoctorId == appointment.DoctorId 
+                            && a.AppointmentDate == appointment.AppointmentDate 
+                            && a.Status != "Cancelled");
+            
+            if (isConflict)
+            {
+                ModelState.AddModelError("AppointmentDate", "The selected doctor already has an appointment at this time.");
+                LoadDropdowns();
+                return View(appointment);
+            }
         }
 
         if (!ModelState.IsValid)
@@ -223,6 +239,23 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ModelState.Remove("Department");
         ModelState.Remove("Doctor");
         ModelState.Remove("Patient");
+
+        if (appointment.DoctorId.HasValue)
+        {
+            var isConflict = await _context.Appointments
+                .AnyAsync(a => a.DoctorId == appointment.DoctorId 
+                            && a.AppointmentDate == appointment.AppointmentDate 
+                            && a.AppointmentId != id 
+                            && a.Status != "Cancelled");
+            
+            if (isConflict)
+            {
+                ModelState.AddModelError("AppointmentDate", "The selected doctor already has an appointment at this time.");
+                LoadDropdowns();
+                return View(appointment);
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
