@@ -25,7 +25,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             _context = context;
         }
 
-        // GET: Users
+        // GET: Users[
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var dbHospitalManagementContext = _context.Users.Include(u => u.UserRole);
@@ -197,6 +198,40 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 BirthDay = user.BirthDay,
                 Address = user.Address
             };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(EditProfile model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null) return RedirectToAction("Login", "Authentication");
+
+            int userId = int.Parse(userIdStr);
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user != null)
+            {
+                // Cập nhật thông tin từ Model vào Database
+                user.FirstName = model.FirstName;
+                user.LastName = model.LastName;
+                user.Phone = model.Phone;
+                user.Gender = model.Gender;
+                user.BirthDay = model.BirthDay;
+                user.Address = model.Address;
+                user.UpdatedAt = DateTime.Now;
+
+                _context.Update(user);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Cập nhật hồ sơ cá nhân thành công!";
+                return RedirectToAction("Profile"); // Quay lại trang xem thông tin
+            }
 
             return View(model);
         }

@@ -26,15 +26,18 @@
                             <li class="nav-item">
                                 <a class="nav-link nav-link-custom" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-controller="Home" asp-action="Privacy">Bảo mật</a>
-                            </li>
+                        @if (User.IsInRole("Admin"))
+                        {
                             <li class="nav-item">
                                 <a class="nav-link nav-link-custom" asp-area="" asp-controller="Users" asp-action="Index">Người dùng</a>
                             </li>
+                        }
+                        @if ( User == null && !User.IsInRole("Patients"))
+                        {
                             <li class="nav-item">
                                 <a class="nav-link nav-link-custom" asp-area="" asp-controller="Patients" asp-action="Index">Quản lý</a>
                             </li>
+                        }
                     
                             <li class="nav-item dropdown">
                                 <a class="nav-link nav-link-custom dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -158,9 +161,9 @@
                 var currentUrl = window.location.href.toLowerCase();
 
                 // Nếu URL có chứa chữ create hoặc edit (đang gõ form) -> Chỉ hiện thông báo
-                if (currentUrl.includes("create") || currentUrl.includes("edit")) {
+            if (currentUrl.includes("create") || currentUrl.includes("edit") || currentUrl.includes("delete")) {
                     // Chỗ này bạn có thể thay alert bằng Toastr hoặc Bootstrap Toast cho đẹp
-                    alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+                    alert("Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
                 }
                 // Nếu đang ở trang Index (danh sách) hoặc Details -> F5 tự động luôn
                 else {
