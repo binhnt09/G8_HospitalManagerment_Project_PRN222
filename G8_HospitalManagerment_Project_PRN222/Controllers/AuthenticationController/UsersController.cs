@@ -152,7 +152,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
 
-        [Authorize(Roles = "Patient")]
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
@@ -173,6 +173,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
         [HttpGet]
+        [Authorize]
         public IActionResult EditProfile()
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
