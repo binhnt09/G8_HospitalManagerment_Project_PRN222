@@ -181,7 +181,23 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var labOrder = await _service.GetLabOrderDetailsAsync(id);
+            if (labOrder == null)
+            {
+                return NotFound();
+            }
+
+            // Ghép tên bệnh nhân
+            string patientName = labOrder.Patient?.User != null
+                ? $"{labOrder.Patient.User.FirstName} {labOrder.Patient.User.LastName}"
+                : $"Mã BN: {labOrder.PatientId}";
+
             await _service.DeleteLabOrderAsync(id);
+
+            if (_hubContext != null)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveLabOrderUpdate");
+            }
             return RedirectToAction(nameof(Index));
         }
 
