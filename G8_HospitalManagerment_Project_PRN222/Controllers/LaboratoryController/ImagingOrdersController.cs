@@ -223,6 +223,15 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var imagingOrder = await _context.ImagingOrders.FindAsync(id);
+            string patientName = imagingOrder.Patient?.User != null
+                ? $"{imagingOrder.Patient.User.FirstName} {imagingOrder.Patient.User.LastName}"
+                : $"Mã BN: {imagingOrder.PatientId}";
+
+
+            if (_hubContext != null)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveImagingOrderUpdate", patientName + " (Đã xóa phiếu)");
+            }
             if (imagingOrder != null)
             {
                 _context.ImagingOrders.Remove(imagingOrder);
