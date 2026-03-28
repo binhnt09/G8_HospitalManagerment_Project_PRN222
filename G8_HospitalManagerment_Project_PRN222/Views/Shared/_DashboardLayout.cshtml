@@ -23,16 +23,24 @@
         <nav class="sidebar">
             <ul class="nav flex-column mt-3">
                 <li class="nav-item">
-                    <a class="nav-link @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                    <a class="nav-link full-reload @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
                         <i class="bi bi-grid-1x2"></i>
                         <span class="sidebar-text">Dashboard</span>
                     </a>
                 </li>
 
-                <li class="nav-item mt-3 mb-1 px-4 text-muted small fw-bold text-uppercase sidebar-text">Nghiệp vụ Y tế</li>
+                <li class="nav-item mt-3 mb-1 px-4 text-muted small fw-bold text-uppercase sidebar-text" style="font-size: 0.75rem;">
+                    Nghiệp vụ Y tế
+                </li>
 
                 @if (User.IsInRole("Admin"))
                 {
+                    <li class="nav-item">
+                        <a class="nav-link @(currentController == "Patients" ? "active" : "")" asp-controller="Patients" asp-action="Index">
+                            <i class="bi bi-people"></i>
+                            <span class="sidebar-text">Bệnh nhân</span>
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link @(currentController == "Doctors" ? "active" : "")" asp-controller="Doctors" asp-action="Index">
                             <i class="bi bi-person-badge"></i>
@@ -59,6 +67,15 @@
 
                 @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
                 {
+                    @if (!User.IsInRole("Admin"))
+                    { @* Tránh trùng lặp link Appointment nếu đã hiện ở trên *@
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Appointments" ? "active" : "")" asp-controller="Appointments" asp-action="Index">
+                                <i class="bi bi-calendar-check"></i>
+                                <span class="sidebar-text">Lịch hẹn</span>
+                            </a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link @(currentController == "MedicalRecords" ? "active" : "")" asp-controller="MedicalRecords" asp-action="Index">
                             <i class="bi bi-journal-medical"></i>
