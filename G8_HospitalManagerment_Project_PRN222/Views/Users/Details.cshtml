@@ -1,90 +1,88 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.User
+@model G8_HospitalManagerment_Project_PRN222.Models.User
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết Người dùng";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h1>Details</h1>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    <div class="row justify-content-center">
+        <div class="col-12" style="max-width: 800px;">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <h4 class="mb-0 fw-bold text-primary">Hồ sơ Người dùng</h4>
+                    <p class="text-muted small mt-1">Thông tin chi tiết tài khoản.</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row mb-4 bg-light rounded-3 p-3 mx-0">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <p class="text-muted small mb-1 fw-medium">Họ và Tên</p>
+                            <h5 class="text-dark fw-bold mb-0">@Model.FirstName @Model.LastName</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Phân quyền</p>
+                            @if (Model.UserRole?.RoleName == "Admin" || Model.UserRole?.RoleName == "Director")
+                            {
+                                <span class="badge bg-danger rounded-pill px-3">@Model.UserRole?.RoleName</span>
+                            }
+                            else if (Model.UserRole?.RoleName == "Doctor" || Model.UserRole?.RoleName == "Nurse")
+                            {
+                                <span class="badge bg-info text-dark rounded-pill px-3">@Model.UserRole?.RoleName</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary rounded-pill px-3">@(Model.UserRole?.RoleName ?? "N/A")</span>
+                            }
+                        </div>
+                    </div>
 
-<div>
-    <h4>User</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FirstName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FirstName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LastName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LastName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Phone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Phone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Gender)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Gender)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BirthDay)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BirthDay)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Address)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Address)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DeletedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DeletedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsDeleted)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsDeleted)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UserRole)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UserRole.UserRoleId)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.UserId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Email</p>
+                            <p class="text-dark fw-medium mb-0">@(Model.Email ?? "N/A")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Số điện thoại</p>
+                            <p class="text-dark fw-medium mb-0">@(Model.Phone ?? "N/A")</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Giới tính</p>
+                            <p class="text-dark fw-medium mb-0">@(Model.Gender ?? "N/A")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Ngày sinh</p>
+                            <p class="text-dark fw-medium mb-0">@(Model.BirthDay?.ToString("dd/MM/yyyy") ?? "N/A")</p>
+                        </div>
+
+                        <div class="col-12">
+                            <p class="text-muted small mb-1 fw-medium">Địa chỉ</p>
+                            <p class="text-dark fw-medium mb-0">@(Model.Address ?? "N/A")</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Ngày tạo</p>
+                            <p class="text-dark mb-0">@(Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted small mb-1 fw-medium">Ngày cập nhật</p>
+                            <p class="text-dark mb-0">@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white border-top-0 pb-4 px-4">
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-medium">
+                            <i class="bi bi-arrow-left me-1"></i> Danh sách
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model?.UserId" class="btn btn-primary rounded-pill px-5 fw-medium shadow-sm">
+                            <i class="bi bi-pencil-square me-1"></i> Chỉnh sửa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
