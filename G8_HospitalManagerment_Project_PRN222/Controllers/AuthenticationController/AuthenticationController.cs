@@ -135,28 +135,28 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
 
-private async Task SendEmailAsync(string email, string subject, string message)
-    {
-        var emailMessage = new MimeMessage();
-        emailMessage.From.Add(new MailboxAddress("ChildrenCare System", "your-gmail@gmail.com"));
-        emailMessage.To.Add(new MailboxAddress("", email));
-        emailMessage.Subject = subject;
-        emailMessage.Body = new TextPart("html") { Text = message };
-
-        using (var client = new SmtpClient())
+        private async Task SendEmailAsync(string email, string subject, string message)
         {
-            // Kết nối với server Gmail (Port 587 cho TLS)
-            await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("ChildrenCare System", "your-gmail@gmail.com"));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart("html") { Text = message };
 
-            // Đăng nhập (Sử dụng App Password của Gmail, không phải mật khẩu chính)
-            await client.AuthenticateAsync("he181465dangnguyenhieu@gmail.com", "wgml msqt spfo kfet");
+            using (var client = new SmtpClient())
+            {
+                // Kết nối với server Gmail (Port 587 cho TLS)
+                await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
 
-            await client.SendAsync(emailMessage);
-            await client.DisconnectAsync(true);
+                // Đăng nhập (Sử dụng App Password của Gmail, không phải mật khẩu chính)
+                await client.AuthenticateAsync("he181465dangnguyenhieu@gmail.com", "wgml msqt spfo kfet");
+
+                await client.SendAsync(emailMessage);
+                await client.DisconnectAsync(true);
+            }
         }
-    }
 
-    [HttpGet]
+        [HttpGet]
         public IActionResult VerifyNotice()
         {
             return View();
@@ -234,31 +234,35 @@ private async Task SendEmailAsync(string email, string subject, string message)
                 ViewBag.LoginError = "Tài khoản chưa được xác thực email.";
                 ViewBag.ShowResend = true; // Hiện nút Resend ở View
                 ViewBag.UnverifiedEmail = user.Email;
-                ViewBag.Mode = "login"; 
+                ViewBag.Mode = "login";
                 return View("Index", model);
             }
 
             var auth = await _context.Authentications.FirstOrDefaultAsync(a => a.UserId == user.UserId && a.AuthType == "local");
-            if (auth == null) { 
-                ViewBag.LoginError = "Tài khoản này dùng Google!"; 
-                ViewBag.Mode = "login"; 
-                return View("Index", model); 
+            if (auth == null)
+            {
+                ViewBag.LoginError = "Tài khoản này dùng Google!";
+                ViewBag.Mode = "login";
+                return View("Index", model);
             }
 
-            if (auth.Password != HashPassword(model.Password)) { 
-                ViewBag.LoginError = "Sai mật khẩu!"; 
-                ViewBag.Mode = "login"; 
-                return View("Index", model); 
+            if (auth.Password != HashPassword(model.Password))
+            {
+                ViewBag.LoginError = "Sai mật khẩu!";
+                ViewBag.Mode = "login";
+                return View("Index", model);
             }
 
             var roleName = await _context.UserRoles.Where(r => r.UserRoleId == user.UserRoleId).Select(r => r.RoleName).FirstOrDefaultAsync() ?? "Patient";
-            await Storage(new StorageInfo { 
-                UserId = user.UserId, 
-                FirstName = user.FirstName, 
-                LastName = user.LastName, 
-                Email = user.Email, 
-                RoleName = roleName, 
-                AuthType = "local" });
+            await Storage(new StorageInfo
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                RoleName = roleName,
+                AuthType = "local"
+            });
 
             return RedirectToAction("Index", "Home");
         }

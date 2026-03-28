@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.HRController
 {
+
+
     public class DoctorsController : Controller
     {
         private readonly DbHospitalManagementContext _context; 
