@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
 using Microsoft.AspNetCore.SignalR;
 using G8_HospitalManagerment_Project_PRN222.Hubs;
+using ClosedXML.Excel;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
 {
@@ -213,6 +216,121 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
 
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var drugs = await _context.Drugs.OrderByDescending(d => d.CreatedAt).ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Drugs");
+                var currentRow = 1;
+
+                // Headers
+                worksheet.Cell(currentRow, 1).Value = "Mã Thuốc";
+                worksheet.Cell(currentRow, 2).Value = "Tên Thuốc";
+                worksheet.Cell(currentRow, 3).Value = "Đơn vị";
+                worksheet.Cell(currentRow, 4).Value = "Giá";
+                worksheet.Cell(currentRow, 5).Value = "Số lượng tồn";
+                worksheet.Cell(currentRow, 6).Value = "Mô tả";
+
+                // Format headers
+                var headerRange = worksheet.Range(currentRow, 1, currentRow, 6);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                foreach (var drug in drugs)
+                {
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Value = drug.DrugId;
+                    worksheet.Cell(currentRow, 2).Value = drug.DrugName;
+                    worksheet.Cell(currentRow, 3).Value = drug.Unit;
+                    worksheet.Cell(currentRow, 4).Value = drug.Price;
+                    worksheet.Cell(currentRow, 5).Value = drug.StockQuantity;
+                    worksheet.Cell(currentRow, 6).Value = drug.Description;
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"DanhSachThuoc_{DateTime.Now:yyyyMMdd}.xlsx");
+                }
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file Excel.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                using (var stream = new MemoryStream())
+                {
+                    await file.CopyToAsync(stream);
+                    using (var workbook = new XLWorkbook(stream))
+                    {
+                        var worksheet = workbook.Worksheet(1);
+                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header row
+
+                        foreach (var row in rows)
+                        {
+                            var drugName = row.Cell(2).GetString()?.Trim();
+                            if (string.IsNullOrWhiteSpace(drugName)) continue;
+
+                            var unitStr = row.Cell(3).GetString()?.Trim();
+                            var priceStr = row.Cell(4).GetString()?.Trim();
+                            var qtyStr = row.Cell(5).GetString()?.Trim();
+                            var descStr = row.Cell(6).GetString()?.Trim();
+
+                            var existingDrug = await _context.Drugs.FirstOrDefaultAsync(d => d.DrugName.ToLower() == drugName.ToLower());
+
+                            if (existingDrug != null)
+                            {
+                                // Update existing
+                                if (!string.IsNullOrEmpty(unitStr)) existingDrug.Unit = unitStr;
+                                if (decimal.TryParse(priceStr, out var price)) existingDrug.Price = price;
+                                if (int.TryParse(qtyStr, out var qty)) existingDrug.StockQuantity = qty;
+                                if (!string.IsNullOrEmpty(descStr)) existingDrug.Description = descStr;
+                                existingDrug.UpdatedAt = DateTime.Now;
+                            }
+                            else
+                            {
+                                // Add new
+                                var newDrug = new Drug
+                                {
+                                    DrugName = drugName,
+                                    Unit = unitStr,
+                                    Price = decimal.TryParse(priceStr, out var nprice) ? (decimal?)nprice : null,
+                                    StockQuantity = int.TryParse(qtyStr, out var nqty) ? (int?)nqty : null,
+                                    Description = descStr,
+                                    CreatedAt = DateTime.Now
+                                };
+                                _context.Drugs.Add(newDrug);
+                            }
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                TempData["Success"] = "Nhập dữ liệu thuốc thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi nhập dữ liệu: " + ex.Message;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

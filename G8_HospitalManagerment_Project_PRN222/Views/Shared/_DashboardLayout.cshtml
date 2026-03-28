@@ -245,12 +245,31 @@
     <!-- SignalR for real-time updates on Dashboard -->
     <script>
         var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+        window.isNavigating = false;
+
+        // Bỏ qua các sự kiện tải lại khi người dùng đang thao tác chuyển trang hoặc submit form
+        $(document).on('click', 'a:not(.ajax-link)', function() {
+            var url = $(this).attr('href');
+            var target = $(this).attr('target');
+            if (url && url !== '#' && !url.includes('javascript:') && target !== '_blank') {
+                window.isNavigating = true;
+                setTimeout(() => { window.isNavigating = false; }, 5000); // Reset safety fallback
+            }
+        });
+        
+        $(document).on('submit', 'form', function() {
+            window.isNavigating = true;
+        });
 
         connection.on("ReceiveDataChange", function () {
+            if (window.isNavigating) return; // Do not interrupt pending navigation
+
             var currentUrl = window.location.href.toLowerCase();
 
             if (currentUrl.includes("create") || currentUrl.includes("edit")) {
-                alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+                // Hiển thị toast hoặc thay vì alert để thân thiện hơn nếu muốn
+                console.log("Data changed while editing/creating. Prompting user later.");
+                // Dùng alert có thể gây phiền phức nếu có nhiều update.
             }
             else {
                 window.location.reload();

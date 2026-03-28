@@ -158,9 +158,9 @@
                 var currentUrl = window.location.href.toLowerCase();
 
                 // Nếu URL có chứa chữ create hoặc edit (đang gõ form) -> Chỉ hiện thông báo
-                if (currentUrl.includes("create") || currentUrl.includes("edit")) {
+            if (currentUrl.includes("create") || currentUrl.includes("edit") || currentUrl.includes("delete")) {
                     // Chỗ này bạn có thể thay alert bằng Toastr hoặc Bootstrap Toast cho đẹp
-                    alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+                    alert("Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
                 }
                 // Nếu đang ở trang Index (danh sách) hoặc Details -> F5 tự động luôn
                 else {

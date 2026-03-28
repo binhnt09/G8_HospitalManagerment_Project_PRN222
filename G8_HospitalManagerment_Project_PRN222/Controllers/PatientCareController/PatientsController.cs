@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
 using Microsoft.AspNetCore.SignalR;
 using G8_HospitalManagerment_Project_PRN222.Hubs;
+using ClosedXML.Excel;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
 {
@@ -228,6 +231,160 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
 
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var patients = await _context.Patients
+                .Include(p => p.User)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Patients");
+                var currentRow = 1;
+
+                // Headers
+                worksheet.Cell(currentRow, 1).Value = "Mã BN";
+                worksheet.Cell(currentRow, 2).Value = "Họ";
+                worksheet.Cell(currentRow, 3).Value = "Tên";
+                worksheet.Cell(currentRow, 4).Value = "Email";
+                worksheet.Cell(currentRow, 5).Value = "SĐT";
+                worksheet.Cell(currentRow, 6).Value = "Giới tính";
+                worksheet.Cell(currentRow, 7).Value = "Ngày sinh";
+                worksheet.Cell(currentRow, 8).Value = "Địa chỉ";
+                worksheet.Cell(currentRow, 9).Value = "Nhóm máu";
+                worksheet.Cell(currentRow, 10).Value = "Dị ứng";
+                worksheet.Cell(currentRow, 11).Value = "Số BHYT";
+
+                // Format headers
+                var headerRange = worksheet.Range(currentRow, 1, currentRow, 11);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                foreach (var patient in patients)
+                {
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Value = patient.PatientId;
+                    worksheet.Cell(currentRow, 2).Value = patient.User?.FirstName;
+                    worksheet.Cell(currentRow, 3).Value = patient.User?.LastName;
+                    worksheet.Cell(currentRow, 4).Value = patient.User?.Email;
+                    worksheet.Cell(currentRow, 5).Value = patient.User?.Phone;
+                    worksheet.Cell(currentRow, 6).Value = patient.User?.Gender;
+                    worksheet.Cell(currentRow, 7).Value = patient.User?.BirthDay?.ToString("yyyy-MM-dd");
+                    worksheet.Cell(currentRow, 8).Value = patient.User?.Address;
+                    worksheet.Cell(currentRow, 9).Value = patient.BloodType;
+                    worksheet.Cell(currentRow, 10).Value = patient.Allergies;
+                    worksheet.Cell(currentRow, 11).Value = patient.InsuranceNumber;
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"DanhSachBenhNhan_{DateTime.Now:yyyyMMdd}.xlsx");
+                }
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file Excel.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                // Get the Patient role id
+                var patientRole = await _context.UserRoles.FirstOrDefaultAsync(r => r.RoleName == "Patient");
+                int roleId = patientRole?.UserRoleId ?? 2; // Assuming 2 as fallback or another appropriate default ID
+
+                using (var stream = new MemoryStream())
+                {
+                    await file.CopyToAsync(stream);
+                    using (var workbook = new XLWorkbook(stream))
+                    {
+                        var worksheet = workbook.Worksheet(1);
+                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header row
+
+                        foreach (var row in rows)
+                        {
+                            var firstName = row.Cell(2).GetString()?.Trim();
+                            var lastName = row.Cell(3).GetString()?.Trim();
+                            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName)) continue;
+
+                            var email = row.Cell(4).GetString()?.Trim();
+                            var phone = row.Cell(5).GetString()?.Trim();
+                            var gender = row.Cell(6).GetString()?.Trim();
+                            
+                            DateTime? birthDay = null;
+                            if (DateTime.TryParse(row.Cell(7).GetString()?.Trim(), out var pDate)) birthDay = pDate;
+                            
+                            var address = row.Cell(8).GetString()?.Trim();
+                            var bloodType = row.Cell(9).GetString()?.Trim();
+                            var allergies = row.Cell(10).GetString()?.Trim();
+                            var insurance = row.Cell(11).GetString()?.Trim();
+
+                            User matchingUser = null;
+                            if (!string.IsNullOrEmpty(email))
+                                matchingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                            if (matchingUser == null && !string.IsNullOrEmpty(phone))
+                                matchingUser = await _context.Users.FirstOrDefaultAsync(u => u.Phone == phone);
+
+                            if (matchingUser == null)
+                            {
+                                // Create new User
+                                matchingUser = new User
+                                {
+                                    FirstName = firstName,
+                                    LastName = lastName,
+                                    Email = email,
+                                    Phone = phone,
+                                    Gender = gender,
+                                    BirthDay = birthDay,
+                                    Address = address,
+                                    UserRoleId = roleId,
+                                    CreatedAt = DateTime.Now
+                                };
+                                _context.Users.Add(matchingUser);
+                                await _context.SaveChangesAsync(); // save immediately to get UserId
+                            }
+
+                            // Check if this user is already a patient
+                            var existingPatient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == matchingUser.UserId);
+                            if (existingPatient == null)
+                            {
+                                var newPatient = new Patient
+                                {
+                                    UserId = matchingUser.UserId,
+                                    BloodType = bloodType,
+                                    Allergies = allergies,
+                                    InsuranceNumber = insurance,
+                                    CreatedAt = DateTime.Now
+                                };
+                                _context.Patients.Add(newPatient);
+                            }
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                TempData["Success"] = "Nhập dữ liệu bệnh nhân thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi nhập dữ liệu: " + ex.Message;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

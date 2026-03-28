@@ -1,66 +1,137 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Patient
+@model G8_HospitalManagerment_Project_PRN222.Models.Patient
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết Bệnh nhân";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h1>Details</h1>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-light rounded-circle shadow-sm me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="bi bi-arrow-left text-dark"></i>
+        </a>
+        <h3 class="mb-0 fw-bold text-dark">Chi tiết Bệnh nhân</h3>
+    </div>
 
-<div>
-    <h4>Patient</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BloodType)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BloodType)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Allergies)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Allergies)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.InsuranceNumber)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.InsuranceNumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DeletedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DeletedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsDeleted)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsDeleted)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.User)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.User.UserId)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.PatientId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="row g-4">
+        <!-- Thông tin cá nhân (User Details) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: #e8f0fe;">
+                            <i class="bi bi-person fs-4 text-primary"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold text-dark">Thông tin Cá nhân</h5>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Họ và Tên</p>
+                            <p class="fw-bold text-dark fs-6">@(Model.User?.FirstName ?? "N/A") @(Model.User?.LastName ?? "N/A")</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Giới tính</p>
+                            <p class="text-dark fs-6">@(Model.User?.Gender ?? "N/A")</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Ngày sinh</p>
+                            <p class="text-dark fs-6">@(Model.User?.BirthDay?.ToString("dd/MM/yyyy") ?? "N/A")</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Điện thoại</p>
+                            <p class="text-dark fs-6">@(Model.User?.Phone ?? "N/A")</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Email</p>
+                            <p class="text-dark fs-6">@(Model.User?.Email ?? "N/A")</p>
+                        </div>
+                        <div class="col-12">
+                            <p class="text-muted small mb-1 fw-medium">Địa chỉ</p>
+                            <p class="text-dark fs-6">@(Model.User?.Address ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin Y tế (Patient Specific Details) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: #fce4ec;">
+                            <i class="bi bi-heart-pulse fs-4 text-danger"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold text-dark">Hồ sơ Y tế</h5>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Mã Bệnh nhân (ID)</p>
+                            <p class="fw-bold text-primary fs-6">@Model.PatientId</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="text-muted small mb-1 fw-medium">Nhóm máu</p>
+                            @if (!string.IsNullOrEmpty(Model.BloodType))
+                            {
+                                <span class="badge bg-danger rounded-pill px-3 fs-6">@Model.BloodType</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-secondary border rounded-pill px-3 fs-6">Chưa rõ</span>
+                            }
+                        </div>
+                        <div class="col-12">
+                            <p class="text-muted small mb-1 fw-medium">Bảo hiểm Y tế (BHYT)</p>
+                            <p class="text-dark fs-6">@(Model.InsuranceNumber ?? "Không có")</p>
+                        </div>
+                        <div class="col-12">
+                            <p class="text-muted small mb-1 fw-medium">Tiền sử Dị ứng</p>
+                            <div class="p-3 bg-light rounded-3 text-dark">
+                                @(string.IsNullOrEmpty(Model.Allergies) ? "Không ghi nhận tiền sử dị ứng." : Model.Allergies)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Metadata -->
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex gap-4">
+                        <div>
+                            <span class="text-muted small fw-medium d-block">Ngày tạo hồ sơ</span>
+                            <span class="text-dark small">@(Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium d-block">Cập nhật lần cuối</span>
+                            <span class="text-dark small">@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
+                        </div>
+                        @if (Model.IsDeleted == true)
+                        {
+                            <div>
+                                <span class="text-muted small fw-medium d-block">Trạng thái</span>
+                                <span class="badge bg-danger">Đã xóa (@(Model.DeletedAt?.ToString("dd/MM/yyyy") ?? ""))</span>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model?.PatientId" class="btn btn-warning px-4 rounded-pill fw-medium d-flex align-items-center text-dark">
+                            <i class="bi bi-pencil-square me-2"></i> Chỉnh sửa
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model?.PatientId" class="btn btn-outline-danger px-4 rounded-pill fw-medium d-flex align-items-center">
+                            <i class="bi bi-trash3 me-2"></i> Xóa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
