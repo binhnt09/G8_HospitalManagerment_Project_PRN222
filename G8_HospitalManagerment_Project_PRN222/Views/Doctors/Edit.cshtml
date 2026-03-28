@@ -1,69 +1,88 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Doctor
+﻿@using G8_HospitalManagerment_Project_PRN222.Models.ViewModels
+@model DoctorViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
+<div class="container mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật thông tin Bác sĩ</h4>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @* Tổng hợp lỗi *@
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<h1>Edit</h1>
+                @* --- Hidden fields quan trọng để Server biết cần update bản ghi nào --- *@
+                <input type="hidden" asp-for="DoctorId" />
+                <input type="hidden" asp-for="EmployeeId" />
+                @* Giữ lại UserId để ModelState.IsValid không bị lỗi, dù không cho sửa *@
+                <input type="hidden" asp-for="UserId" />
 
-<h4>Doctor</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="DoctorId" />
-            <div class="form-group">
-                <label asp-for="Specialization" class="control-label"></label>
-                <input asp-for="Specialization" class="form-control" />
-                <span asp-validation-for="Specialization" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="YearsExperience" class="control-label"></label>
-                <input asp-for="YearsExperience" class="form-control" />
-                <span asp-validation-for="YearsExperience" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LicenseNumber" class="control-label"></label>
-                <input asp-for="LicenseNumber" class="form-control" />
-                <span asp-validation-for="LicenseNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
-                <span asp-validation-for="EmployeeId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsDeleted" class="control-label"></label>
-                <input asp-for="IsDeleted" class="form-control" />
-                <span asp-validation-for="IsDeleted" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="row">
+                    @* --- PHẦN 1: THÔNG TIN CỐ ĐỊNH (READONLY) --- *@
+                    <div class="col-md-12 mb-3 bg-light p-3 rounded border">
+                        <h6 class="text-muted mb-3">Thông tin định danh (Không được sửa)</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-bold">Mã nhân viên</label>
+                                <input asp-for="EmployeeCode" class="form-control bg-white" readonly />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-bold">Họ và Tên</label>
+                                <input class="form-control bg-white" value="@Model.FullName" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    @* --- PHẦN 2: THÔNG TIN ĐƯỢC PHÉP SỬA --- *@
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Chuyên khoa</label>
+                        <select asp-for="Specialization" class="form-select border-primary shadow-sm">
+                            <option value="">-- Chọn chuyên khoa --</option>
+                            @foreach (var item in ViewBag.Specializations)
+                            {
+                                <option value="@item" selected="@(Model.Specialization == item)">@item</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Specialization" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Phòng ban</label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments">
+                            <option value="">-- Chọn phòng ban --</option>
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Kinh nghiệm (năm)</label>
+                        <input asp-for="YearsExperience" type="number" class="form-control" min="0" max="60" placeholder="VD: 5" />
+                        <span asp-validation-for="YearsExperience" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Số CCHN</label>
+                        <input asp-for="LicenseNumber" class="form-control" placeholder="Nhập số giấy phép..." />
+                        <span asp-validation-for="LicenseNumber" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                        <i class="bi bi-save"></i> Cập nhật qua Socket
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        Hủy bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @* Nạp bộ Script validation của jQuery để validate ở Client *@
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
