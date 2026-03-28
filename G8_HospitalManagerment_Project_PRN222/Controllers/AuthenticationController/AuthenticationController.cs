@@ -408,54 +408,69 @@ private async Task SendEmailAsync(string email, string subject, string message)
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword(string email)
         {
-            if (string.IsNullOrEmpty(email))
-            {
-                TempData["Error"] = "Vui lòng nhập email!";
-                return RedirectToAction("ForgotPassword");
-            }
-
-            // 1. Tìm user theo email
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-
-            if (user == null)
+            if (user == null || !await _context.Authentications.AnyAsync(a => a.UserId == user.UserId && a.AuthType == "local"))
             {
-                TempData["Error"] = "Email không tồn tại trong hệ thống!";
-                return RedirectToAction("ForgotPassword");
+                TempData["Error"] = "Email không tồn tại hoặc đăng nhập bằng Google!";
+                return View();
             }
 
-            // 2. Lấy danh sách các phương thức đăng nhập
-            var authMethods = await _context.Authentications
-                .Where(a => a.UserId == user.UserId)
-                .Select(a => a.AuthType)
-                .ToListAsync();
+            // 1. Vô hiệu hóa các mã OTP cũ của email này (nếu có)
+            var oldResets = _context.PasswordResets.Where(r => r.Email == email && r.IsUsed == false);
+            foreach (var old in oldResets) { old.IsUsed = true; }
 
-            bool hasGoogle = authMethods.Contains("google");
-            bool hasLocal = authMethods.Contains("local");
+            // 2. Tạo mã OTP mới
+            string otp = new Random().Next(100000, 999999).ToString();
 
-            // ❌ CHỈ GOOGLE → KHÔNG cho reset
-            if (hasGoogle && !hasLocal)
+            // 3. Lệnh INSERT vào bảng PasswordResets
+            var pwdReset = new PasswordReset // Giả sử bạn đã tạo Model này
             {
-                TempData["IsGoogleOnly"] = true;
-                TempData["Error"] = "Tài khoản này được quản lý bởi Google. Hãy đăng nhập bằng Google!";
-                return RedirectToAction("ForgotPassword");
-            }
+                Email = email,
+                OtpCode = otp,
+                ExpiryTime = DateTime.Now.AddMinutes(5),
+                IsUsed = false
+            };
+            _context.PasswordResets.Add(pwdReset);
+            await _context.SaveChangesAsync();
 
-            // ✅ CÓ LOCAL → cho reset
-            if (hasLocal)
+            // 4. Gửi Mail
+            await SendEmailAsync(email, "Mã OTP đặt lại mật khẩu", $"Mã của bạn là: <b>{otp}</b>");
+
+            // Vẫn dùng Session để lưu Email để bước sau biết đang verify cho ai
+            HttpContext.Session.SetString("ResetEmail", email);
+            return RedirectToAction("VerifyOTP");
+        }
+        [HttpGet]
+        public IActionResult VerifyOTP()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyOTP(string otp)
+        {
+            var email = HttpContext.Session.GetString("ResetEmail");
+
+            // Tìm mã OTP mới nhất, chưa dùng và chưa hết hạn trong DB
+            var resetRequest = await _context.PasswordResets
+                .Where(r => r.Email == email && r.OtpCode == otp && r.IsUsed == false && r.ExpiryTime > DateTime.Now)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (resetRequest != null)
             {
-                if (hasGoogle)
-                {
-                    TempData["Warning"] = "Bạn cũng có thể đăng nhập nhanh bằng Google.";
-                }
+                // Đánh dấu đã sử dụng mã này
+                resetRequest.IsUsed = true;
+                await _context.SaveChangesAsync();
 
-                HttpContext.Session.SetString("ResetEmail", email);
-                HttpContext.Session.SetString("ResetExpire", DateTime.UtcNow.AddMinutes(10).ToString());
-
+                // Cấp quyền sang trang ResetPassword
+                HttpContext.Session.SetString("Verified", "true");
                 return RedirectToAction("ResetPassword");
             }
 
-            TempData["Error"] = "Đã xảy ra lỗi không xác định.";
-            return RedirectToAction("ForgotPassword");
+            ViewBag.Error = "Mã OTP không chính xác hoặc đã hết hạn!";
+            return View();
         }
 
         [HttpGet]
