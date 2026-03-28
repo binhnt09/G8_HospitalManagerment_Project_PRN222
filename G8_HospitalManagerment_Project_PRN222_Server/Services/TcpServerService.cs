@@ -3,6 +3,8 @@ using G8_HospitalManagerment_Project_PRN222_Server.Models.ViewModels;
 using G8_HospitalManagerment_Project_PRN222_Server.Services;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -211,6 +213,160 @@ namespace G8_HospitalManagerment_Project_PRN222_Server.Services
                         }
                         return;
                     }
+                    else if (command == "EXPORT_EXCEL")
+                    {
+                        try
+                        {
+                            var list = await context.Doctors.Include(d => d.Employee).ThenInclude(e => e.User)
+                                                           .Where(d => d.IsDeleted != true).ToListAsync(stoppingToken);
+
+                            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                            using (var package = new ExcelPackage())
+                            {
+                                var ws = package.Workbook.Worksheets.Add("DoctorsReport");
+                                ws.Cells["A1"].Value = "Mã NV"; ws.Cells["B1"].Value = "Họ Tên"; ws.Cells["C1"].Value = "Chuyên khoa";
+                                ws.Cells["D1"].Value = "Kinh nghiệm"; ws.Cells["E1"].Value = "Số GP";
+
+                                using (var r = ws.Cells["A1:E1"]) { r.Style.Font.Bold = true; r.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid; r.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue); }
+
+                                int row = 2;
+                                foreach (var d in list)
+                                {
+                                    ws.Cells[row, 1].Value = d.Employee?.EmployeeCode;
+                                    ws.Cells[row, 2].Value = d.Employee?.User?.FirstName + " " + d.Employee?.User?.LastName;
+                                    ws.Cells[row, 3].Value = d.Specialization;
+                                    ws.Cells[row, 4].Value = d.YearsExperience + " năm";
+                                    ws.Cells[row, 5].Value = d.LicenseNumber;
+                                    row++;
+                                }
+                                ws.Cells.AutoFitColumns();
+
+                                byte[] fileBytes = package.GetAsByteArray();
+                                // Gửi: [4 byte độ dài] + [Dữ liệu file]
+                                await stream.WriteAsync(BitConverter.GetBytes(fileBytes.Length), 0, 4);
+                                await stream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                                await stream.FlushAsync();
+                                await Task.Delay(500); // Chờ Client nhận xong mới ngắt
+                            }
+                        }
+                        catch (Exception ex) { TcpMonitor.AddLog("Lỗi Export: " + ex.Message); }
+                        return;
+                    }
+                    else if (command == "IMPORT_EXCEL")
+                    {
+                        try
+                        {
+                            // 1. Đọc độ dài file (4 byte tiếp theo trong luồng)
+                            byte[] sizeBuffer = new byte[4];
+                            await ReadExactly(stream, sizeBuffer, 4);
+                            int size = BitConverter.ToInt32(sizeBuffer, 0);
+
+                            TcpMonitor.AddLog($"[TCP] Nhận lệnh Import file: {size} bytes");
+
+                            // 2. Đọc toàn bộ dữ liệu file Excel
+                            byte[] fileBytes = new byte[size];
+                            await ReadExactly(stream, fileBytes, size);
+
+                            // 3. Xử lý Excel bằng EPPlus
+                            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                            using var ms = new MemoryStream(fileBytes);
+                            using var package = new ExcelPackage(ms);
+
+                            var ws = package.Workbook.Worksheets.First();
+                            int row = 2;
+                            int importedCount = 0;
+
+                            // Dùng Transaction để đảm bảo tính toàn vẹn (lỗi 1 dòng là hủy cả file)
+                            using var transaction = await context.Database.BeginTransactionAsync(stoppingToken);
+                            try
+                            {
+                                while (true)
+                                {
+                                    var empCode = ws.Cells[row, 1].Text.Trim();
+                                    var fullName = ws.Cells[row, 2].Text.Trim();
+                                    var specialization = ws.Cells[row, 3].Text.Trim();
+                                    var expText = ws.Cells[row, 4].Text.Trim();
+                                    var license = ws.Cells[row, 5].Text.Trim();
+
+                                    // Dừng lại nếu dòng đó trống
+                                    if (string.IsNullOrEmpty(empCode) || string.IsNullOrEmpty(fullName)) break;
+
+                                    // Kiểm tra xem bác sĩ này đã tồn tại chưa (theo Số GP)
+                                    bool exists = await context.Doctors.AnyAsync(d => d.LicenseNumber == license);
+                                    if (!exists)
+                                    {
+                                        // --- BƯỚC 1: TẠO USER ---
+                                        var nameParts = fullName.Split(' ');
+                                        var newUser = new User
+                                        {
+                                            FirstName = nameParts[0],
+                                            LastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : " ",
+                                            Email = empCode.ToLower() + "@hospital.com", // Tự sinh Email
+                                            UserRoleId = 2, // Role Doctor
+                                            Verified = true,
+                                            CreatedAt = DateTime.Now
+                                        };
+                                        context.Users.Add(newUser);
+                                        await context.SaveChangesAsync();
+
+                                        // --- BƯỚC 2: TẠO MẬT KHẨU (123456) ---
+                                        var auth = new Authentication
+                                        {
+                                            UserId = newUser.UserId,
+                                            Password = "lsrjXOipsCRBeL8o5JZsLOG4OFcjqWprg4hYzdbKCh4=", // Hash của 123456
+                                            AuthType = "local",
+                                            ProviderKey = newUser.Email
+                                        };
+                                        context.Authentications.Add(auth);
+
+                                        // --- BƯỚC 3: TẠO EMPLOYEE ---
+                                        var emp = new Employee
+                                        {
+                                            UserId = newUser.UserId,
+                                            EmployeeCode = empCode,
+                                            DepartmentId = 1, // Mặc định khoa đầu tiên
+                                            Position = "Doctor",
+                                            WorkStatus = "Active",
+                                            HireDate = DateTime.Now
+                                        };
+                                        context.Employees.Add(emp);
+                                        await context.SaveChangesAsync();
+
+                                        // --- BƯỚC 4: TẠO DOCTOR ---
+                                        int.TryParse(expText.Replace("năm", "").Trim(), out int exp);
+                                        var doc = new Doctor
+                                        {
+                                            EmployeeId = emp.EmployeeId,
+                                            Specialization = specialization,
+                                            YearsExperience = exp,
+                                            LicenseNumber = license,
+                                            IsDeleted = false
+                                        };
+                                        context.Doctors.Add(doc);
+
+                                        importedCount++;
+                                    }
+                                    row++;
+                                }
+                                await context.SaveChangesAsync();
+                                await transaction.CommitAsync();
+
+                                await SendResponse(stream, $"SUCCESS|Đã import thành công {importedCount} bác sĩ.");
+                            }
+                            catch (Exception ex)
+                            {
+                                await transaction.RollbackAsync();
+                                throw ex;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            TcpMonitor.AddLog("Lỗi Import: " + ex.Message);
+                            await SendResponse(stream, "ERROR|" + ex.Message);
+                        }
+                        return;
+                    }
+
 
                     // ================================================================
                     // 3. LỆNH FILTER (Lấy danh sách / Tìm kiếm)
@@ -301,6 +457,20 @@ namespace G8_HospitalManagerment_Project_PRN222_Server.Services
             await stream.WriteAsync(BitConverter.GetBytes(data.Length), 0, 4);
             await stream.WriteAsync(data, 0, data.Length);
             await stream.FlushAsync();
+        }
+
+
+
+        // IP EP
+        private async Task ReadExactly(NetworkStream stream, byte[] buffer, int size)
+        {
+            int read = 0;
+            while (read < size)
+            {
+                int r = await stream.ReadAsync(buffer, read, size - read);
+                if (r == 0) throw new Exception("Mất kết nối");
+                read += r;
+            }
         }
     }
 }
