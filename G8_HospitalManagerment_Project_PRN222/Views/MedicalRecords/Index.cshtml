@@ -52,9 +52,9 @@
                 </ul>
             </div>
             
-            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
+            @* <a asp-action="Create" class="btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
                 <i class="bi bi-plus-lg"></i> Tạo hồ sơ
-            </a>
+            </a> *@
         </div>
     </div>
     <div id="record-grid-container" style="transition: all 0.3s ease;">
@@ -240,9 +240,75 @@
     </div>
 </div>
 
+@* real-time signalr *@
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="realtimeToast" class="toast align-items-center text-white bg-success border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fs-6">
+                <i class="bi bi-bell-fill me-2"></i> <span id="toastMessage">Thông báo mặc định</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
         $(document).ready(function () {
+
+            var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+
+            // 2. Bắt sự kiện khi Kỹ thuật viên lưu Edit LabOrder
+            connection.on("ReceiveLabOrderUpdate", function () {
+                
+                // Đổi nội dung tin nhắn Toast
+                $('#toastMessage').text("Hệ thống vừa cập nhật kết quả Xét nghiệm mới!");
+                // $('#toastMessage').text("Kết quả Xét nghiệm của BN " + patientName + " vừa được cập nhật!");
+
+                // Kích hoạt Toast của Bootstrap 5
+                var toastElement = document.getElementById('realtimeToast');
+                var toast = new bootstrap.Toast(toastElement, {
+                    delay: 3000 // Tự động đóng sau 3000ms (Thay thế hoàn hảo cho Task.Delay của Blazor)
+                });
+                toast.show(); // Hiển thị lên màn hình
+
+                // Tự động tải lại bảng dữ liệu (Grid) để thẻ Badge đổi từ màu Vàng sang Xanh
+                var currentUrl = window.location.href;
+                $('#record-grid-container').load(currentUrl + ' #record-grid-container > *', function(response, status) {
+                    if(status === "success") {
+                        // Tải lại thành công, hiệu ứng mượt mà
+                    }
+                });
+            });
+
+            connection.on("ReceiveImagingOrderUpdate", function (patientName) {
+                // Đổi text có kèm tên BN
+                $('#toastMessage').text("Kết quả CĐHA của BN " + patientName + " vừa được cập nhật!");
+                
+                // Đổi màu Toast thành màu Vàng cho Imaging (Tùy chọn cho đẹp)
+                $('#realtimeToast').removeClass('bg-danger bg-success').addClass('bg-warning text-dark');
+
+                // Bật Toast
+                var toast = new bootstrap.Toast(document.getElementById('realtimeToast'), { delay: 5000 });
+                toast.show();
+
+                // Load lại bảng dữ liệu
+                var currentUrl = window.location.href;
+                if ($('#record-grid-container').length) {
+                    $('#record-grid-container').load(currentUrl + ' #record-grid-container > *');
+                }
+            });
+
+            connection.start().catch(function (err) {
+                console.error(err.toString());
+            });
+
+            // Khởi động kết nối SignalR
+            connection.start().catch(function (err) {
+                return console.error(err.toString());
+            });
+
             // Hàm tải lại DataGrid bằng AJAX
             function loadGridData(url) {
                 $('#record-grid-container').css('opacity', '0.4');

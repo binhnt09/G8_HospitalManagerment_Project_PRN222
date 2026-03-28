@@ -23,7 +23,19 @@ namespace G8_HospitalManagerment_Project_PRN222.Repository
 
         public async Task<LabOrder> GetByIdAsync(int id)
         {
-            return await GetAllWithRelations().FirstOrDefaultAsync(m => m.OrderId == id);
+            return await _context.LabOrders
+                    .Include(l => l.Patient)
+                        .ThenInclude(p => p.User)
+
+                    .Include(l => l.Doctor)
+                        .ThenInclude(d => d.Employee)
+                            .ThenInclude(e => e.User)
+
+                    // Kéo danh sách Test (Quan trọng nhất để không bị lỗi "Không tìm thấy danh sách test")
+                    .Include(l => l.LabOrderItems)
+                        .ThenInclude(li => li.Test)
+
+                    .FirstOrDefaultAsync(l => l.OrderId == id);
         }
 
         public async Task AddAsync(LabOrder labOrder)
