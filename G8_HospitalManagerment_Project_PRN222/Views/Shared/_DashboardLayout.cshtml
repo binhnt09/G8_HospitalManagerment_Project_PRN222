@@ -20,7 +20,7 @@
             var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
         }
 
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <ul class="nav flex-column mt-3">
                 <li class="nav-item">
                     <a class="nav-link full-reload @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
