@@ -53,9 +53,9 @@
                 </ul>
             </div>
             
-            <a asp-action="Create" class="open-modal-btn btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
+            @* <a asp-action="Create" class="open-modal-btn btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
                 <i class="bi bi-plus-lg"></i> New Order
-            </a>
+            </a> *@
         </div>
     </div>
     
@@ -233,10 +233,51 @@
     </div>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="realtimeToast" class="toast align-items-center text-white bg-danger border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fs-6 fw-medium">
+                <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i> 
+                <span id="toastMessage">Thông báo có yêu cầu mới</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
         $(document).ready(function () {
             
+            var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+
+            // Lắng nghe sự kiện "ReceiveNewOrder"
+            connection.on("ReceiveNewOrder", function (recordId, patientName) {
+                
+                // 1. Sửa nội dung thông báo
+                $('#toastMessage').text("Có Yêu cầu XÉT NGHIỆM mới cho BN: " + patientName);
+
+                // 2. Kích hoạt hiện Toast trong 5 giây
+                var toastElement = document.getElementById('realtimeToast');
+                var toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+                toast.show();
+
+                // 3. Tự động tải lại bảng dữ liệu để hiển thị Order mới lên đầu
+                var currentUrl = window.location.href;
+                $('#order-grid-container').load(currentUrl + ' #order-grid-container > *');
+            });
+
+            // Bắt đầu kết nối
+            connection.start().then(function () {
+                // KHI KẾT NỐI THÀNH CÔNG, LẬP TỨC XIN GIA NHẬP GROUP "LabTechnicians"
+                connection.invoke("JoinGroup", "LabTechnicians").catch(function (err) {
+                    return console.error(err.toString());
+                });
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+
             // XỬ LÝ MỞ MODAL (GIỮ NGUYÊN CỦA BẠN)
             $(document).on('click', '.open-modal-btn', function (e) {
                 e.preventDefault(); 

@@ -1,21 +1,24 @@
-﻿using System;
+﻿using G8_HospitalManagerment_Project_PRN222.Hubs;
+using G8_HospitalManagerment_Project_PRN222.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using G8_HospitalManagerment_Project_PRN222.Models;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
 {
     public class ImagingOrdersController : Controller
     {
         private readonly DbHospitalManagementContext _context;
-
-        public ImagingOrdersController(DbHospitalManagementContext context)
+        private readonly IHubContext<DataHub> _hubContext;
+        public ImagingOrdersController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: ImagingOrders
@@ -139,60 +142,57 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
         // GET: ImagingOrders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var imagingOrder = await _context.ImagingOrders.FindAsync(id);
-            if (imagingOrder == null)
-            {
-                return NotFound();
-            }
-            ViewData["DoctorId"] = new SelectList(_context.Doctors, "DoctorId", "DoctorId", imagingOrder.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", imagingOrder.MedicalRecordId);
-            ViewData["PatientId"] = new SelectList(_context.Patients, "PatientId", "PatientId", imagingOrder.PatientId);
-            ViewData["ServiceId"] = new SelectList(_context.Services, "ServiceId", "ServiceId", imagingOrder.ServiceId);
+            var imagingOrder = await _context.ImagingOrders
+                // Kéo thông tin Bệnh nhân
+                .Include(i => i.Patient).ThenInclude(p => p.User)
+                // Kéo thông tin Bác sĩ
+                .Include(i => i.Doctor).ThenInclude(d => d.Employee).ThenInclude(e => e.User)
+                // Kéo thông tin Dịch vụ (Chụp X-Quang, Siêu âm...)
+                .Include(i => i.Service)
+                .FirstOrDefaultAsync(m => m.OrderId == id);
+
+            if (imagingOrder == null) return NotFound();
+
+            // Không cần dùng ViewBag nữa vì View dạng Modal không sửa các trường này
             return View(imagingOrder);
         }
 
-        // POST: ImagingOrders/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // 2. POST: ImagingOrders/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("OrderId,MedicalRecordId,PatientId,DoctorId,ServiceId,OrderDate,Status,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] ImagingOrder imagingOrder)
+        public async Task<IActionResult> Edit(int id, string Status) // Chỉ nhận id và Status
         {
-            if (id != imagingOrder.OrderId)
+            var existingOrder = await _context.ImagingOrders.Include(i => i.Patient).ThenInclude(p => p.User)
+                                        .FirstOrDefaultAsync(i => i.OrderId == id);
+            if (existingOrder == null) return NotFound();
+
+            // Chỉ cập nhật Trạng thái và Thời gian sửa
+            existingOrder.Status = Status;
+            existingOrder.UpdatedAt = DateTime.Now;
+
+            try
             {
-                return NotFound();
+                _context.Update(existingOrder);
+                await _context.SaveChangesAsync();
+
+                // BẮN SIGNALR ĐỂ BÁC SĨ NHẬN ĐƯỢC THÔNG BÁO TỰ ĐỘNG LOAD LẠI TRANG
+                // (Dùng chung "ReceiveLabOrderUpdate" để tab MedicalRecord dùng chung 1 sự kiện cho gọn, 
+                // hoặc bạn có thể đổi thành "ReceiveImagingOrderUpdate" tùy ý)
+                if (_hubContext != null)
+                {
+                    string fullName = existingOrder.Patient?.User?.FirstName + " " + existingOrder.Patient?.User?.LastName;
+                    await _hubContext.Clients.All.SendAsync("ReceiveImagingOrderUpdate", fullName);
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ImagingOrderExists(existingOrder.OrderId)) return NotFound();
+                else throw;
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(imagingOrder);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ImagingOrderExists(imagingOrder.OrderId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["DoctorId"] = new SelectList(_context.Doctors, "DoctorId", "DoctorId", imagingOrder.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", imagingOrder.MedicalRecordId);
-            ViewData["PatientId"] = new SelectList(_context.Patients, "PatientId", "PatientId", imagingOrder.PatientId);
-            ViewData["ServiceId"] = new SelectList(_context.Services, "ServiceId", "ServiceId", imagingOrder.ServiceId);
-            return View(imagingOrder);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: ImagingOrders/Delete/5

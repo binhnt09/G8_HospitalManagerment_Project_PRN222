@@ -1,80 +1,61 @@
 ﻿@model G8_HospitalManagerment_Project_PRN222.Models.ImagingOrder
 
 @{
-    // ViewData["Title"] = "Edit";
-    Layout = null;
+    Layout = null; // Quan trọng để mở dạng Popup
 }
 
-<h1>Edit</h1>
-
-<h4>ImagingOrder</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="OrderId" />
-            <div class="form-group">
-                <label asp-for="MedicalRecordId" class="control-label"></label>
-                <select asp-for="MedicalRecordId" class="form-control" asp-items="ViewBag.MedicalRecordId"></select>
-                <span asp-validation-for="MedicalRecordId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class="form-control" asp-items="ViewBag.PatientId"></select>
-                <span asp-validation-for="PatientId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorId" class="control-label"></label>
-                <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.DoctorId"></select>
-                <span asp-validation-for="DoctorId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ServiceId" class="control-label"></label>
-                <select asp-for="ServiceId" class="form-control" asp-items="ViewBag.ServiceId"></select>
-                <span asp-validation-for="ServiceId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="OrderDate" class="control-label"></label>
-                <input asp-for="OrderDate" class="form-control" />
-                <span asp-validation-for="OrderDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsDeleted" class="control-label"></label>
-                <input asp-for="IsDeleted" class="form-control" />
-                <span asp-validation-for="IsDeleted" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+<div class="px-2">
+    <div class="d-flex align-items-center mb-3 border-bottom pb-2">
+        <i class="bi bi-person-bounding-box text-primary fs-3 me-2"></i>
+        <h4 class="fw-bold text-primary mb-0">Cập nhật phiếu CĐHA #@Model.OrderId</h4>
     </div>
+
+    <div class="bg-light p-3 rounded-3 mb-4 border">
+        <div class="row mb-2">
+            <div class="col-4 text-muted fw-semibold small">Bệnh nhân:</div>
+            <div class="col-8 fw-bold text-dark">
+                @(Model.Patient?.User?.FirstName + " " + Model.Patient?.User?.LastName ?? "Mã BN: " + Model.PatientId)
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-4 text-muted fw-semibold small">Bác sĩ chỉ định:</div>
+            <div class="col-8 fw-bold text-dark">
+                BS. @(Model.Doctor?.Employee?.User?.FirstName + " " + Model.Doctor?.Employee?.User?.LastName ?? "Mã BS: " + Model.DoctorId)
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-4 text-muted fw-semibold small">Ngày chỉ định:</div>
+            <div class="col-8">@(Model.OrderDate?.ToString("dd/MM/yyyy HH:mm"))</div>
+        </div>
+        <div class="row">
+            <div class="col-4 text-muted fw-semibold small">Dịch vụ CĐHA:</div>
+            <div class="col-8 text-danger fw-bold">
+                <i class="bi bi-heart-pulse-fill me-1"></i> @(Model.Service?.ServiceName ?? "Service ID: " + Model.ServiceId)
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <input type="hidden" name="id" value="@Model.OrderId" />
+
+        <div class="form-group mb-4">
+            <label asp-for="Status" class="fw-bold text-dark mb-2">Cập nhật Trạng thái</label>
+            <select asp-for="Status" class="form-select form-select-lg border-primary shadow-sm fw-medium">
+                <option value="Pending">Đang chờ (Pending)</option>
+                <option value="In Progress">Đang chụp/siêu âm (In Progress)</option>
+                <option value="Completed">Đã hoàn thành (Completed)</option>
+                <option value="Cancelled">Đã hủy (Cancelled)</option>
+            </select>
+            <small class="text-muted mt-1 d-block">
+                <i class="bi bi-info-circle"></i> Trạng thái mới sẽ được đồng bộ ngay lập tức sang Hồ sơ bệnh án của Bác sĩ.
+            </small>
+        </div>
+
+        <div class="text-end border-top pt-3 mt-4">
+            <button type="button" class="btn btn-light px-4 me-2 border shadow-sm" data-bs-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm"><i class="bi bi-save me-2"></i>Lưu trạng thái</button>
+        </div>
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
