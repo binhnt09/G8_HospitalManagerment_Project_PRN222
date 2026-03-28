@@ -1,67 +1,84 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Patient
+@model G8_HospitalManagerment_Project_PRN222.Models.Patient
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Chỉnh sửa Bệnh nhân";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h1>Edit</h1>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    <div class="card shadow-sm p-4 mx-auto border-0 rounded-4" style="max-width: 800px;">
+        <div class="d-flex align-items-center mb-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background-color: #fff3cd;">
+                <i class="bi bi-pencil-square fs-4 text-warning"></i>
+            </div>
+            <h2 class="mb-0 fw-bold text-dark">Chỉnh sửa Bệnh nhân</h2>
+        </div>
+        <hr class="mb-4" />
 
-<h4>Patient</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
         <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input type="hidden" asp-for="PatientId" />
-            <div class="form-group">
-                <label asp-for="BloodType" class="control-label"></label>
-                <input asp-for="BloodType" class="form-control" />
-                <span asp-validation-for="BloodType" class="text-danger"></span>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="UserId" class="form-label fw-medium text-muted">Tài khoản User liên kết</label>
+                    <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId"></select>
+                    <span asp-validation-for="UserId" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-6">
+                    <label asp-for="BloodType" class="form-label fw-medium text-muted">Nhóm máu</label>
+                    <input asp-for="BloodType" class="form-control" />
+                    <span asp-validation-for="BloodType" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="InsuranceNumber" class="form-label fw-medium text-muted">Số BHYT</label>
+                    <input asp-for="InsuranceNumber" class="form-control" />
+                    <span asp-validation-for="InsuranceNumber" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-6">
+                    <label asp-for="Allergies" class="form-label fw-medium text-muted">Tiền sử Dị ứng</label>
+                    <input asp-for="Allergies" class="form-control" />
+                    <span asp-validation-for="Allergies" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-6">
+                    <label asp-for="CreatedAt" class="form-label fw-medium text-muted">Ngày tạo</label>
+                    <input asp-for="CreatedAt" class="form-control" />
+                    <span asp-validation-for="CreatedAt" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="UpdatedAt" class="form-label fw-medium text-muted">Ngày cập nhật</label>
+                    <input asp-for="UpdatedAt" class="form-control" />
+                    <span asp-validation-for="UpdatedAt" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="DeletedAt" class="form-label fw-medium text-muted">Ngày xóa</label>
+                    <input asp-for="DeletedAt" class="form-control" />
+                    <span asp-validation-for="DeletedAt" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="IsDeleted" class="form-label fw-medium text-muted">Trạng thái Xóa (IsDeleted/True/False)</label>
+                    <input asp-for="IsDeleted" class="form-control" />
+                    <span asp-validation-for="IsDeleted" class="text-danger small"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Allergies" class="control-label"></label>
-                <input asp-for="Allergies" class="form-control" />
-                <span asp-validation-for="Allergies" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="InsuranceNumber" class="control-label"></label>
-                <input asp-for="InsuranceNumber" class="form-control" />
-                <span asp-validation-for="InsuranceNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UserId" class="control-label"></label>
-                <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
-                <span asp-validation-for="UserId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsDeleted" class="control-label"></label>
-                <input asp-for="IsDeleted" class="form-control" />
-                <span asp-validation-for="IsDeleted" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="d-flex gap-2 mt-5 pt-3 border-top">
+                <button type="submit" class="btn btn-primary px-4 rounded-pill fw-medium d-flex align-items-center">
+                    <i class="bi bi-save me-2"></i> Lưu thay đổi
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-4 rounded-pill fw-medium d-flex align-items-center">
+                    <i class="bi bi-arrow-left me-2"></i> Trở về Danh sách
+                </a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

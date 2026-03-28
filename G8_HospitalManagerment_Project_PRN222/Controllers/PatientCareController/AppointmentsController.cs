@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -111,8 +111,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     // GET: /Appointments/Book - simple booking form for logged-in patients
     public IActionResult Book()
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
         {
             return RedirectToAction("Login", "Authentication");
         }
@@ -126,6 +126,13 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ModelState.Remove("Department");
         ModelState.Remove("Doctor");
         ModelState.Remove("Patient");
+
+        if (appointment.AppointmentDate <= DateTime.Now)
+        {
+            ModelState.AddModelError("AppointmentDate", "Appointment date must be in the future.");
+            return View(appointment);
+        }
+
         if (!ModelState.IsValid)
         {
             LoadDropdowns();
@@ -141,8 +148,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Book([Bind("AppointmentDate,Reason")] Appointment model)
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
         {
             return RedirectToAction("Login", "Authentication");
         }
@@ -156,10 +163,10 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         ModelState.Remove("Status");
         
         // Ensure patient record exists for current user
-        var patient = _context.Patients.FirstOrDefault(p => p.UserId == userId.Value);
+        var patient = _context.Patients.FirstOrDefault(p => p.UserId == userId);
         if (patient == null)
         {
-            patient = new Patient { UserId = userId.Value };
+            patient = new Patient { UserId = userId };
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
         }
@@ -195,7 +202,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
 
         await _service.CreateAsync(appointment);
 
-        return RedirectToAction("Index");
+        return RedirectToAction("MyAppointments");
     }
 
     public async Task<IActionResult> Edit(int? id)
@@ -241,6 +248,63 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
     {
         await _service.DeleteAsync(id);
         return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> MyAppointments()
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return View(new List<Appointment>());
+        }
+
+        var appointments = await _context.Appointments
+            .Include(a => a.Department)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.Employee)
+                    .ThenInclude(e => e.User)
+            .Where(a => a.PatientId == patient.PatientId)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ToListAsync();
+
+        return View(appointments);
+    }
+
+    [HttpPost, ActionName("Cancel")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelAppointment(int id)
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null)
+        {
+            return RedirectToAction("Login", "Authentication");
+        }
+
+        var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.AppointmentId == id && a.PatientId == patient.PatientId);
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+
+        if (appointment.Status != "Cancelled" && appointment.Status != "Completed")
+        {
+            appointment.Status = "Cancelled";
+            await _service.UpdateAsync(appointment);
+        }
+
+        return RedirectToAction(nameof(MyAppointments));
     }
 
     private void LoadDropdowns()

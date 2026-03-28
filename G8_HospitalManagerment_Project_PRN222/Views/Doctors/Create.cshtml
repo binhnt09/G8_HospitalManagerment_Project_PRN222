@@ -1,52 +1,64 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Doctor
+﻿@using G8_HospitalManagerment_Project_PRN222.Models.ViewModels
+@model DoctorViewModel
 
-@{
-    ViewData["Title"] = "Create";
-}
-
-<h1>Create</h1>
-
-<h4>Doctor</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
+<div class="card shadow-sm">
+    <div class="card-header bg-success text-white"><h4>Thêm Bác sĩ mới</h4></div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @* Hiển thị tổng hợp lỗi nếu có *@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Specialization" class="control-label"></label>
-                <input asp-for="Specialization" class="form-control" />
-                <span asp-validation-for="Specialization" class="text-danger"></span>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Tài khoản bác sĩ</label>
+                    <select asp-for="UserId" class="form-select" asp-items="ViewBag.Users">
+                        <option value="">-- Chọn tài khoản --</option>
+                    </select>
+                    <span asp-validation-for="UserId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Khoa chuyên môn</label>
+                    <select asp-for="Specialization" class="form-select">
+                        <option value="">-- Chọn chuyên khoa --</option>
+                        @foreach (var item in ViewBag.Specializations)
+                        {
+                            <option value="@item">@item</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Specialization" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Phòng ban</label>
+                    <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments">
+                        <option value="">-- Chọn phòng ban --</option>
+                    </select>
+                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Kinh nghiệm (năm)</label>
+                    <input asp-for="YearsExperience" type="number" class="form-control" placeholder="VD: 5" />
+                    <span asp-validation-for="YearsExperience" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold">Số CCHN</label>
+                    <input asp-for="LicenseNumber" class="form-control" placeholder="Nhập số giấy phép..." />
+                    <span asp-validation-for="LicenseNumber" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="YearsExperience" class="control-label"></label>
-                <input asp-for="YearsExperience" class="form-control" />
-                <span asp-validation-for="YearsExperience" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LicenseNumber" class="control-label"></label>
-                <input asp-for="LicenseNumber" class="form-control" />
-                <span asp-validation-for="LicenseNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class ="form-control" asp-items="ViewBag.EmployeeId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
+
+            <hr />
+            <button type="submit" class="btn btn-success px-4">Lưu (Mã NV tự sinh)</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

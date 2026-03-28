@@ -1,78 +1,186 @@
 ﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.Test>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Test Management";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    int currentPage = ViewBag.CurrentPage;
+    int totalPages = ViewBag.TotalPages;
 }
 
-<h1>Index</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.TestName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Category)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ReferenceRange)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Cost)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DeletedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsDeleted)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.TestName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ReferenceRange)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cost)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsDeleted)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.TestId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.TestId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TestId">Delete</a>
-            </td>
-        </tr>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        
+        <form asp-action="Index" method="get" class="d-flex flex-grow-1" style="max-width: 500px;">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
+                <span class="input-group-text bg-transparent border-0 text-muted ps-4">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="search" value="@ViewBag.CurrentFilter" class="form-control border-0 shadow-none bg-transparent" placeholder="Search by testName, category..." aria-label="Search">
+                <button class="btn btn-primary rounded-pill m-1 px-4 fw-medium" type="submit">Search</button>
+            </div>
+            <input type="hidden" name="sort" value="@ViewBag.CurrentSort" />
+        </form>
+
+        <div class="d-flex gap-2">
+            <div class="dropdown shadow-sm rounded-pill">
+                <button class="btn btn-white bg-white border-0 rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium text-dark" type="button" id="sortMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-sort-down text-primary"></i> Sort By
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2" aria-labelledby="sortMenuButton">
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="@ViewBag.CostSortParm" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-calendar-event me-2 text-muted"></i>Cost</a></li>
+                    <li><a class="dropdown-item py-2" asp-action="Index" asp-route-sortOrder="category_asc" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-person-badge me-2 text-muted"></i>Category</a></li>
+                </ul>
+            </div>
+            
+            <a asp-action="Create" class="open-modal-btn btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
+                <i class="bi bi-plus-lg"></i> New Test
+            </a>
+        </div>
+    </div>
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                    <thead class="text-muted" style="background-color: #FAFAFA; font-size: 0.85rem; text-transform: uppercase;">
+                        <tr>
+                            <th class="ps-4 py-3 border-bottom-0 fw-semibold">
+                                <a asp-action="Index" asp-route-sortOrder="@ViewBag.CostSortParm" asp-route-searchString="@ViewBag.CurrentFilter" class="text-decoration-none text-muted">
+                                    Test Date <i class="bi bi-arrow-down-up ms-1"></i>
+                                </a>
+                            </th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Test Name</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Category</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">ReferenceRange</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Cost</th>
+                            <th class="py-3 border-bottom-0 fw-semibold">Test status</th>
+                            <th class="pe-4 py-3 border-bottom-0 fw-semibold text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @foreach (var item in Model) {
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark">@item.CreatedAt?.ToString("yyyy-MM-dd")</div>
+                                    <div class="text-muted small">@item.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="text-dark">@item.TestName</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="text-dark">@item.Category</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="text-dark">@item.ReferenceRange</div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="text-dark">@item.Cost</div>
+                                </td>
+                                <td class="py-3">
+                                    @if(item.IsDeleted == true) {
+                                        <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">Deleted</span>
+                                    } else {
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">Active</span>
+                                    }
+                                </td>
+                                <td class="pe-4 py-3 text-end">
+                                    <a asp-action="Details" asp-route-id="@item.TestId" class="open-modal-btn btn btn-sm btn-light text-muted p-2 rounded-circle me-1"><i class="bi bi-eye"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@item.TestId" class="open-modal-btn btn btn-sm btn-light text-primary p-2 rounded-circle me-1"><i class="bi bi-pencil-square"></i></a>
+                                    <div class="dropdown d-inline">
+                                        <button class="btn btn-sm btn-light text-muted p-2 rounded-circle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-1">
+                                            <li><a class="open-modal-btn dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.TestId"><i class="bi bi-trash3 me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center p-4 border-top">
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    Showing <span class="fw-bold text-dark">@ViewBag.ItemStart</span> to <span class="fw-bold text-dark">@ViewBag.ItemEnd</span> of <span class="fw-bold text-dark">@ViewBag.TotalItems</span> tests
+                </div>
+                
+                @if (totalPages > 1)
+                {
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link rounded-pill border-0 text-muted px-3" asp-action="Index" asp-route-pageNumber="@(currentPage - 1)"><i class="bi bi-chevron-left me-1"></i> Previous</a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link rounded-circle border-0 mx-1 @(i == currentPage ? "bg-primary text-white" : "text-dark")" asp-action="Index" asp-route-pageNumber="@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link rounded-pill border-0 text-muted px-3" asp-action="Index" asp-route-pageNumber="@(currentPage + 1)">Next <i class="bi bi-chevron-right ms-1"></i></a>
+                        </li>
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size: 0.9rem;">Total Orders</div>
+                        <h3 class="fw-bold mb-0 text-dark">@ViewBag.TotalOrders</h3>
+                    </div>
+                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; background-color: #E8F0FE; color: #1A73E8;">
+                        <i class="bi bi-file-earmark-text fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 pb-4" id="modal-body-content">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khi click vào bất kỳ nút nào có class 'open-modal-btn'
+            $('.open-modal-btn').on('click', function (e) {
+                e.preventDefault(); // Ngăn trình duyệt chuyển trang
+                
+                var url = $(this).attr('href'); // Lấy đường dẫn (vd: /LabOrder/Create)
+                
+                // Mở modal lên trước và hiện Loading
+                $('#modal-body-content').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading...</p></div>');
+                $('#formModal').modal('show');
+                
+                // Dùng jQuery AJAX gọi đến Server lấy file cshtml về
+                $.get(url, function (data) {
+                    // Nhồi HTML lấy được vào giữa Modal
+                    $('#modal-body-content').html(data);
+                }).fail(function() {
+                    $('#modal-body-content').html('<div class="alert alert-danger">Error loading data. Please try again.</div>');
+                });
+            });
+        });
+    </script>
 }
-    </tbody>
-</table>

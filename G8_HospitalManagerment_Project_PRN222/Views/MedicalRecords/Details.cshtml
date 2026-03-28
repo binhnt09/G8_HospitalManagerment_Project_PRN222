@@ -1,4 +1,4 @@
-@model G8_HospitalManagerment_Project_PRN222.Models.ViewModels.MedicalRecordDetailsViewModel
+@model G8_HospitalManagerment_Project_PRN222.ViewModels.MedicalRecordDetailsViewModel
 
 @{
     ViewData["Title"] = "Chi tiết hồ sơ bệnh án";
@@ -13,13 +13,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     @* ── Page header ── *@
     <div class="d-flex align-items-center justify-content-between mb-4">
@@ -30,31 +23,26 @@
             <p class="text-muted mb-0">Mã hồ sơ: <strong>#@Model.RecordId</strong></p>
         </div>
         <div class="d-flex gap-2">
-            <a asp-action="Create" asp-controller="Prescriptions"
-               asp-route-medicalRecordId="@Model.RecordId"
-               class="btn btn-success">
+            <a asp-action="Create" asp-controller="Prescriptions" asp-route-medicalRecordId="@Model.RecordId" class="btn btn-success">
                 <i class="bi bi-capsule me-1"></i> Kê đơn thuốc
             </a>
             <a asp-action="Index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Danh sách
+                <i class="bi bi-arrow-left me-1"></i> Trở lại
             </a>
         </div>
     </div>
 
-    @* ── Two info cards ── *@
+    @* ── KHỐI 1: THÔNG TIN BỆNH NHÂN & LÂM SÀNG ── *@
     <div class="row g-4 mb-4">
-
         <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person-vcard me-2"></i>Thông tin bệnh nhân &amp; bác sĩ
-                    </h5>
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white py-3 border-0 rounded-top-4">
+                    <h5 class="mb-0"><i class="bi bi-person-vcard me-2"></i>Thông tin bệnh nhân & bác sĩ</h5>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-5 text-muted">Bệnh nhân</dt>
-                        <dd class="col-sm-7 fw-semibold">@Model.PatientName</dd>
+                        <dd class="col-sm-7 fw-bold text-dark fs-5">@Model.PatientName</dd>
 
                         <dt class="col-sm-5 text-muted">Bác sĩ phụ trách</dt>
                         <dd class="col-sm-7 fw-semibold">@Model.DoctorName</dd>
@@ -75,76 +63,119 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header bg-info text-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-stethoscope me-2"></i>Kết quả khám lâm sàng
-                    </h5>
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-danger text-white py-3 border-0 rounded-top-4">
+                    <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Kết luận Y khoa</h5>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
-                        <dt class="col-sm-4 text-muted">Triệu chứng</dt>
+                        <dt class="col-sm-4 text-muted">Trạng thái hồ sơ</dt>
                         <dd class="col-sm-8">
-                            @if (!string.IsNullOrEmpty(Model.Symptoms))
+                            @if (Model.Status == "Waiting_For_Deposit_Inpatient")
                             {
-                                @Model.Symptoms
+                                <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-hospital me-1"></i> Yêu cầu Nhập viện nội trú</span>
+                            }
+                            else if (Model.Status == "Waiting_For_Deposit_Surgery")
+                            {
+                                <span class="badge bg-danger px-3 py-2"><i class="bi bi-bandaid me-1"></i> Yêu cầu Phẫu thuật</span>
+                            }
+                            else if (Model.Status == "Waiting_For_Pharmacy" || Model.Prescriptions.Any())
+                            {
+                                <span class="badge bg-success px-3 py-2"><i class="bi bi-capsule me-1"></i> Điều trị Ngoại trú (Kê đơn)</span>
                             }
                             else
                             {
-                                <em class="text-muted">Không có</em>
+                                <span class="badge bg-secondary px-3 py-2">Đang xử lý / Chờ kết quả</span>
                             }
                         </dd>
 
                         <dt class="col-sm-4 text-muted">Chẩn đoán</dt>
-                        <dd class="col-sm-8">
-                            @if (!string.IsNullOrEmpty(Model.Diagnosis))
-                            {
-                                <span class="badge bg-danger text-white fs-6 fw-normal px-3 py-2">
-                                    @Model.Diagnosis
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </dd>
+                        <dd class="col-sm-8 fw-bold text-danger">@(string.IsNullOrEmpty(Model.Diagnosis) ? "—" : Model.Diagnosis)</dd>
 
-                        <dt class="col-sm-4 text-muted">Điều trị</dt>
-                        <dd class="col-sm-8">
-                            @if (!string.IsNullOrEmpty(Model.Treatment))
-                            {
-                                @Model.Treatment
-                            }
-                            else
-                            {
-                                <em class="text-muted">Không có</em>
-                            }
-                        </dd>
+                        <dt class="col-sm-4 text-muted">Triệu chứng</dt>
+                        <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Symptoms) ? "—" : Model.Symptoms)</dd>
+
+                        <dt class="col-sm-4 text-muted">Hướng điều trị</dt>
+                        <dd class="col-sm-8 text-primary">@(string.IsNullOrEmpty(Model.Treatment) ? "—" : Model.Treatment)</dd>
                     </dl>
                 </div>
             </div>
         </div>
     </div>
 
-    @* ── Prescriptions section ── *@
+    @* ── KHỐI 2: CHỈ ĐỊNH CẬN LÂM SÀNG ── *@
+    <div class="card shadow-sm border-0 mb-4 rounded-4 bg-light">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3 text-dark border-bottom pb-2">
+                <i class="bi bi-eyedropper text-warning me-2"></i>Chỉ định Cận lâm sàng
+            </h5>
+            
+            <div class="row g-4">
+                <div class="col-md-6 border-end">
+                    <h6 class="fw-bold text-secondary mb-3">1. Xét nghiệm (Lab Orders)</h6>
+                    @if (!Model.LabOrders.Any())
+                    {
+                        <p class="text-muted small mb-0"><em>Không có chỉ định xét nghiệm.</em></p>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var lab in Model.LabOrders)
+                            {
+                                <div class="p-3 bg-white border rounded shadow-sm">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-bold text-dark">Mã phiếu: #@lab.OrderId</span>
+                                        @if(lab.Status == "Completed") { <span class="badge bg-success-subtle text-success">Hoàn thành</span> }
+                                        else { <span class="badge bg-warning-subtle text-warning">Đang chờ</span> }
+                                    </div>
+                                    <ul class="mb-0 ps-3 small text-muted">
+                                        @foreach(var test in lab.TestNames)
+                                        {
+                                            <li>@test</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-secondary mb-3">2. Chẩn đoán hình ảnh (Imaging)</h6>
+                    @if (!Model.ImagingOrders.Any())
+                    {
+                        <p class="text-muted small mb-0"><em>Không có chỉ định hình ảnh.</em></p>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var img in Model.ImagingOrders)
+                            {
+                                <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold text-dark">Dịch vụ: @(img.ServiceName ?? "ID " + img.ServiceId)</div>
+                                        <small class="text-muted">Mã phiếu: #@img.OrderId</small>
+                                    </div>
+                                    @if(img.Status == "Completed") { <span class="badge bg-success-subtle text-success">Hoàn thành</span> }
+                                    else { <span class="badge bg-warning-subtle text-warning">Đang chờ</span> }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── KHỐI 3: ĐƠN THUỐC (Giữ nguyên logic cũ của bạn) ── *@
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h4 class="fw-bold mb-0">
-            <i class="bi bi-capsule-pill text-success me-2"></i>Đơn thuốc đã kê
-        </h4>
-        <a asp-action="Create" asp-controller="Prescriptions"
-           asp-route-medicalRecordId="@Model.RecordId"
-           class="btn btn-sm btn-outline-success">
-            <i class="bi bi-plus-lg me-1"></i> Thêm đơn thuốc
-        </a>
+        <h4 class="fw-bold mb-0"><i class="bi bi-capsule-pill text-success me-2"></i>Đơn thuốc đã kê</h4>
     </div>
 
     @if (!Model.Prescriptions.Any())
     {
-        <div class="alert alert-secondary">
+        <div class="alert alert-secondary rounded-4">
             <i class="bi bi-info-circle me-2"></i>Chưa có đơn thuốc nào cho hồ sơ này.
-            <a asp-action="Create" asp-controller="Prescriptions"
-               asp-route-medicalRecordId="@Model.RecordId"
-               class="alert-link ms-1">Kê đơn ngay →</a>
         </div>
     }
     else
@@ -152,25 +183,19 @@
         @for (int rxIdx = 0; rxIdx < Model.Prescriptions.Count; rxIdx++)
         {
             var rx = Model.Prescriptions[rxIdx];
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+            <div class="card shadow-sm border-0 mb-4 rounded-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top-4">
                     <span class="fw-semibold">
-                        <i class="bi bi-receipt me-2 text-success"></i>
-                        Đơn thuốc #@rx.PrescriptionId
-                        <span class="text-muted fw-normal ms-2 small">
-                            — @(rx.PrescriptionDate.HasValue ? rx.PrescriptionDate.Value.ToString("dd/MM/yyyy") : "N/A")
-                        </span>
+                        <i class="bi bi-receipt me-2 text-success"></i> Đơn thuốc #@rx.PrescriptionId
+                        <span class="text-muted fw-normal ms-2 small"> — @(rx.PrescriptionDate.HasValue ? rx.PrescriptionDate.Value.ToString("dd/MM/yyyy") : "N/A")</span>
                     </span>
                 </div>
 
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(rx.DoctorAdvice))
                     {
-                        <blockquote class="blockquote-footer mb-3">
-                            <i class="bi bi-chat-quote me-1"></i><em>@rx.DoctorAdvice</em>
-                        </blockquote>
+                        <blockquote class="blockquote-footer mb-3"><i class="bi bi-chat-quote me-1"></i><em>@rx.DoctorAdvice</em></blockquote>
                     }
-
                     @if (rx.Drugs.Any())
                     {
                         <div class="table-responsive">
@@ -193,30 +218,14 @@
                                             <td class="text-muted">@(i + 1)</td>
                                             <td class="fw-semibold">@drug.DrugName</td>
                                             <td>@(string.IsNullOrEmpty(drug.Dosage) ? "—" : drug.Dosage)</td>
-                                            <td class="text-center">
-                                                @drug.Quantity
-                                                @if (!string.IsNullOrEmpty(drug.Unit))
-                                                {
-                                                    <small class="text-muted ms-1">@drug.Unit</small>
-                                                }
-                                            </td>
-                                            <td class="text-center">
-                                                @(drug.DurationDays.HasValue ? $"{drug.DurationDays} ngày" : "—")
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    @(string.IsNullOrEmpty(drug.UsageInstructions) ? "—" : drug.UsageInstructions)
-                                                </small>
-                                            </td>
+                                            <td class="text-center">@drug.Quantity <small class="text-muted ms-1">@drug.Unit</small></td>
+                                            <td class="text-center">@(drug.DurationDays.HasValue ? $"{drug.DurationDays} ngày" : "—")</td>
+                                            <td><small class="text-muted">@(string.IsNullOrEmpty(drug.UsageInstructions) ? "—" : drug.UsageInstructions)</small></td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0"><em>Không có thuốc trong đơn này.</em></p>
                     }
                 </div>
             </div>

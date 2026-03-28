@@ -1,22 +1,26 @@
+using G8_HospitalManagerment_Project_PRN222.Hubs;
+using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
 {
     public class PrescriptionsController : Controller
     {
         private readonly DbHospitalManagementContext _context;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public PrescriptionsController(DbHospitalManagementContext context)
+        public PrescriptionsController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // =====================================================================
@@ -148,6 +152,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+
                 // Fire placeholder notification (outside transaction)
                 await GenerateQRAndNotifyPatient(prescriptionId);
 
@@ -194,13 +200,65 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         // =====================================================================
 
         // GET: Prescriptions
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int? pageNumber)
         {
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.DateSortParm = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.CurrentFilter = searchString;
+
             var prescriptions = _context.Prescriptions
+                .Where(p => p.IsDeleted != true)
+                .Include(p => p.Patient)
+                    .ThenInclude(p => p.User)
                 .Include(p => p.Doctor)
+                    .ThenInclude(d => d.Employee)
+                        .ThenInclude(e => e.User)
                 .Include(p => p.MedicalRecord)
-                .Include(p => p.Patient);
-            return View(await prescriptions.ToListAsync());
+                .Include(p => p.PrescriptionItems)
+                .AsQueryable();
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                prescriptions = prescriptions.Where(p =>
+                    (p.Patient != null && p.Patient.User != null && (p.Patient.User.FirstName + " " + p.Patient.User.LastName).ToLower().Contains(searchString)) ||
+                    (p.Doctor != null && p.Doctor.Employee != null && p.Doctor.Employee.User != null && (p.Doctor.Employee.User.FirstName + " " + p.Doctor.Employee.User.LastName).ToLower().Contains(searchString))
+                );
+            }
+
+            switch (sortOrder)
+            {
+                case "date_asc":
+                    prescriptions = prescriptions.OrderBy(p => p.PrescriptionDate);
+                    break;
+                case "doctor_asc":
+                    prescriptions = prescriptions.OrderBy(p => p.Doctor.Employee.User.FirstName).ThenBy(p => p.Doctor.Employee.User.LastName);
+                    break;
+                case "patient_asc":
+                    prescriptions = prescriptions.OrderBy(p => p.Patient.User.FirstName).ThenBy(p => p.Patient.User.LastName);
+                    break;
+                default: 
+                    prescriptions = prescriptions.OrderByDescending(p => p.PrescriptionDate);
+                    break;
+            }
+
+            int pageSize = 6;
+            int pageIndex = pageNumber ?? 1;
+            int totalItems = await prescriptions.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            ViewBag.CurrentPage = pageIndex;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.ItemStart = totalItems == 0 ? 0 : (pageIndex - 1) * pageSize + 1;
+            ViewBag.ItemEnd = Math.Min(pageIndex * pageSize, totalItems);
+
+            var pagedData = await prescriptions
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return View(pagedData);
         }
 
         // GET: Prescriptions/Details/5
@@ -210,9 +268,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
                 return NotFound();
 
             var prescription = await _context.Prescriptions
-                .Include(p => p.Doctor)
-                .Include(p => p.MedicalRecord)
                 .Include(p => p.Patient)
+                    .ThenInclude(p => p.User)
+                .Include(p => p.Doctor)
+                    .ThenInclude(d => d.Employee)
+                        .ThenInclude(e => e.User)
+                .Include(p => p.MedicalRecord)
+                .Include(p => p.PrescriptionItems.Where(pi => pi.IsDeleted != true))
+                    .ThenInclude(pi => pi.Drug)
                 .FirstOrDefaultAsync(m => m.PrescriptionId == id);
 
             if (prescription == null)
@@ -222,49 +285,21 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         }
 
         // GET: Prescriptions/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // BUSINESS RULE: Prescriptions are immutable after creation.
+        public IActionResult Edit(int? id)
         {
-            if (id == null)
-                return NotFound();
-
-            var prescription = await _context.Prescriptions.FindAsync(id);
-            if (prescription == null)
-                return NotFound();
-
-            ViewData["DoctorId"]        = new SelectList(_context.Doctors, "DoctorId", "DoctorId", prescription.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", prescription.MedicalRecordId);
-            ViewData["PatientId"]       = new SelectList(_context.Patients, "PatientId", "PatientId", prescription.PatientId);
-            return View(prescription);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Prescriptions/Edit/5
+        // BUSINESS RULE: Prescriptions are immutable after creation.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PrescriptionId,MedicalRecordId,PatientId,DoctorId,PrescriptionDate,DoctorAdvice,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] Prescription prescription)
+        public IActionResult Edit(int id, Prescription prescription)
         {
-            if (id != prescription.PrescriptionId)
-                return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(prescription);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Prescriptions.Any(e => e.PrescriptionId == prescription.PrescriptionId))
-                        return NotFound();
-                    throw;
-                }
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewData["DoctorId"]        = new SelectList(_context.Doctors, "DoctorId", "DoctorId", prescription.DoctorId);
-            ViewData["MedicalRecordId"] = new SelectList(_context.MedicalRecords, "RecordId", "RecordId", prescription.MedicalRecordId);
-            ViewData["PatientId"]       = new SelectList(_context.Patients, "PatientId", "PatientId", prescription.PatientId);
-            return View(prescription);
+            TempData["ErrorMessage"] = "Medical regulations prohibit editing a finalized prescription. Please delete and create a new one if necessary.";
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Prescriptions/Delete/5
@@ -292,9 +327,16 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PharmacyController
         {
             var prescription = await _context.Prescriptions.FindAsync(id);
             if (prescription != null)
-                _context.Prescriptions.Remove(prescription);
+            {
+                // Soft delete — preserve the record for audit/billing history
+                prescription.IsDeleted = true;
+                prescription.DeletedAt = DateTime.Now;
+                _context.Update(prescription);
+            }
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            TempData["SuccessMessage"] = "Prescription deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
     }

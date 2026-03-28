@@ -25,6 +25,10 @@ public partial class Patient
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
+    public virtual ICollection<ImagingOrder> ImagingOrders { get; set; } = new List<ImagingOrder>();
+
+    public virtual ICollection<InpatientAdmission> InpatientAdmissions { get; set; } = new List<InpatientAdmission>();
+
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
     public virtual ICollection<LabOrder> LabOrders { get; set; } = new List<LabOrder>();
@@ -32,6 +36,8 @@ public partial class Patient
     public virtual ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
 
     public virtual ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
+
+    public virtual ICollection<SurgerySchedule> SurgerySchedules { get; set; } = new List<SurgerySchedule>();
 
     public virtual User User { get; set; } = null!;
 }

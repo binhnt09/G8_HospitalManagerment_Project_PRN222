@@ -1,82 +1,137 @@
 ﻿@model G8_HospitalManagerment_Project_PRN222.Models.MedicalRecord
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Chốt bệnh & Ra Quyết Định";
 }
 
-<h1>Edit</h1>
-
-<h4>MedicalRecord</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="RecordId" />
-            <div class="form-group">
-                <label asp-for="AppointmentId" class="control-label"></label>
-                <select asp-for="AppointmentId" class="form-control" asp-items="ViewBag.AppointmentId"></select>
-                <span asp-validation-for="AppointmentId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PatientId" class="control-label"></label>
-                <select asp-for="PatientId" class="form-control" asp-items="ViewBag.PatientId"></select>
-                <span asp-validation-for="PatientId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DoctorId" class="control-label"></label>
-                <select asp-for="DoctorId" class="form-control" asp-items="ViewBag.DoctorId"></select>
-                <span asp-validation-for="DoctorId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Diagnosis" class="control-label"></label>
-                <input asp-for="Diagnosis" class="form-control" />
-                <span asp-validation-for="Diagnosis" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Symptoms" class="control-label"></label>
-                <input asp-for="Symptoms" class="form-control" />
-                <span asp-validation-for="Symptoms" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Treatment" class="control-label"></label>
-                <input asp-for="Treatment" class="form-control" />
-                <span asp-validation-for="Treatment" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RecordDate" class="control-label"></label>
-                <input asp-for="RecordDate" class="form-control" />
-                <span asp-validation-for="RecordDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedAt" class="control-label"></label>
-                <input asp-for="UpdatedAt" class="form-control" />
-                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DeletedAt" class="control-label"></label>
-                <input asp-for="DeletedAt" class="form-control" />
-                <span asp-validation-for="DeletedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsDeleted" class="control-label"></label>
-                <input asp-for="IsDeleted" class="form-control" />
-                <span asp-validation-for="IsDeleted" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-success"><i class="bi bi-file-medical"></i> Khám Lần 2: Chốt bệnh & Hướng điều trị</h3>
+        <h5 class="text-muted">Bệnh nhân: <span class="fw-bold text-dark">@ViewData["PatientName"]</span></h5>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="RecordId" />
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 h-100 bg-light rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-file-earmark-medical"></i> Kết quả Cận lâm sàng
+                        </h5>
+                        
+                        <h6 class="fw-bold mt-3 text-secondary">1. Xét nghiệm (Lab Results)</h6>
+                        <ul class="list-group mb-4 shadow-sm">
+                            @if(Model.LabOrders != null && Model.LabOrders.Any())
+                            {
+                                foreach(var order in Model.LabOrders)
+                                {
+                                    if (order.LabOrderItems != null)
+                                    {
+                                        foreach(var item in order.LabOrderItems)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>@(item.Test?.TestName ?? "Xét nghiệm ID: " + item.TestId)</span>
+                                                <span class="badge bg-success rounded-pill px-3 py-2">Đã có kết quả</span>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <li class="list-group-item text-muted small">Không có chỉ định xét nghiệm</li>
+                            }
+                        </ul>
+
+                        <h6 class="fw-bold text-secondary">2. Chẩn đoán hình ảnh (Imaging Results)</h6>
+                        @if(Model.ImagingOrders != null && Model.ImagingOrders.Any())
+                        {
+                            foreach(var img in Model.ImagingOrders)
+                            {
+                                <div class="card mb-3 border-0 shadow-sm">
+                                    <div class="card-body p-3">
+                                        <strong class="d-block text-dark mb-1">Dịch vụ ID: @img.ServiceId</strong>
+                                        <div class="p-2 bg-light border rounded text-muted small">
+                                            KẾT LUẬN: Bác sĩ CĐHA đã tải kết quả lên hệ thống.
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <ul class="list-group shadow-sm">
+                                <li class="list-group-item text-muted small">Không có chỉ định hình ảnh</li>
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 h-100 rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-danger mb-3 border-bottom pb-2">
+                            <i class="bi bi-pen"></i> Kết luận Y khoa
+                        </h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Symptoms" class="form-label fw-semibold">Triệu chứng (Cập nhật nếu có)</label>
+                                <textarea asp-for="Symptoms" class="form-control" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Diagnosis" class="form-label fw-semibold">Chẩn đoán xác định</label>
+                                <input asp-for="Diagnosis" class="form-control form-control-lg text-danger fw-bold" placeholder="Ghi chẩn đoán cuối cùng..." required />
+                                <span asp-validation-for="Diagnosis" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Treatment" class="form-label fw-semibold">Hướng điều trị / Lời dặn</label>
+                                <textarea asp-for="Treatment" class="form-control" rows="3" placeholder="Ghi chú điều trị..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-4 bg-light rounded-4 border">
+                            <h6 class="fw-bold mb-3 text-dark">Quyết định xử trí:</h6>
+                            <div class="d-flex flex-column flex-md-row gap-3">
+                                
+                                <input type="radio" class="btn-check" name="DecisionOption" id="optOutpatient" value="Outpatient" required autocomplete="off">
+                                <label class="btn btn-outline-primary px-4 py-3 flex-fill text-start" for="optOutpatient">
+                                    <div class="fw-bold fs-6"><i class="bi bi-capsule fs-5 me-2"></i> Ngoại trú</div>
+                                    <small class="text-muted d-block mt-1">Chuyển sang kê đơn thuốc</small>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="DecisionOption" id="optInpatient" value="Inpatient" autocomplete="off">
+                                <label class="btn btn-outline-warning px-4 py-3 flex-fill text-start" for="optInpatient">
+                                    <div class="fw-bold fs-6 text-dark"><i class="bi bi-hospital fs-5 me-2"></i> Nhập viện</div>
+                                    <small class="text-muted d-block mt-1">Làm thủ tục nội trú</small>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="DecisionOption" id="optSurgery" value="Surgery" autocomplete="off">
+                                <label class="btn btn-outline-danger px-4 py-3 flex-fill text-start" for="optSurgery">
+                                    <div class="fw-bold fs-6"><i class="bi bi-bandaid fs-5 me-2"></i> Phẫu thuật</div>
+                                    <small class="text-muted d-block mt-1">Làm thủ tục mổ</small>
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-light px-4 border">Trở lại</a>
+                            <button type="submit" class="btn btn-success px-5 fw-bold shadow-sm">
+                                <i class="bi bi-check-circle me-1"></i> Lưu & Chuyển hướng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

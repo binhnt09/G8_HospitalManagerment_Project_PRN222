@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/G8_HospitalManagerment_Project_PRN222.styles.css" asp-append-version="true" />
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
     <body>
@@ -52,10 +51,10 @@
 
                     <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                         @{
-                            var userEmail = Context.Session.GetString("UserEmail");
+                            var userName = @User.Identity.Name;
                         }
 
-                        @if (string.IsNullOrEmpty(userEmail))
+                        @if (string.IsNullOrEmpty(userName))
                         {
                             <!-- CHƯA LOGIN -->
                             <a asp-controller="Authentication"
@@ -74,13 +73,13 @@
                         {
                             <!-- ĐÃ LOGIN -->
                             <div class="dropdown">
-                                
-                                @if (!string.IsNullOrEmpty(userEmail))
+
+                                @if (!string.IsNullOrEmpty(userName))
                                 {
                                     <button class="btn btn-light dropdown-toggle fw-bold"
                                             type="button"
                                             data-bs-toggle="dropdown">
-                                        👤 @userEmail
+                                        👤 @userName
                                     </button>
 
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -98,6 +97,14 @@
                                                asp-controller="Authentication"
                                                asp-action="ChangePassword">
                                                 🔐 Đổi mật khẩu
+                                            </a>
+                                        </li>
+                                        
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="Appointments"
+                                               asp-action="MyAppointments">
+                                                📅 Lịch hẹn của tôi
                                             </a>
                                         </li>
 
@@ -138,6 +145,36 @@
         <script src="~/lib/jquery/dist/jquery.min.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/microsoft/signalr/dist/browser/signalr.js"></script>
+
+        <script>
+            // 1. Kết nối với Đài phát thanh "/dataHub"
+            var connection = new signalR.HubConnectionBuilder().withUrl("/dataHub").build();
+
+            // 2. Lắng nghe sự kiện có tên là "ReceiveDataChange"
+            connection.on("ReceiveDataChange", function () {
+
+                // --- LOGIC SMART RELOAD CỦA BẠN NẰM Ở ĐÂY ---
+                var currentUrl = window.location.href.toLowerCase();
+
+                // Nếu URL có chứa chữ create hoặc edit (đang gõ form) -> Chỉ hiện thông báo
+                if (currentUrl.includes("create") || currentUrl.includes("edit")) {
+                    // Chỗ này bạn có thể thay alert bằng Toastr hoặc Bootstrap Toast cho đẹp
+                    alert("⚠️ Có người vừa cập nhật dữ liệu. Vui lòng tải lại trang sau khi bạn lưu xong để tránh lỗi đồng bộ!");
+                }
+                // Nếu đang ở trang Index (danh sách) hoặc Details -> F5 tự động luôn
+                else {
+                    window.location.reload();
+                }
+            });
+
+            // 3. Khởi động kết nối
+            connection.start().then(function () {
+                console.log("SignalR Connected!");
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+        </script>
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 

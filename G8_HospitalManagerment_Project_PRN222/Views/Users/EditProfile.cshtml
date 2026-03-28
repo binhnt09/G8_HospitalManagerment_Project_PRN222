@@ -1,66 +1,115 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.User
+﻿@model G8_HospitalManagerment_Project_PRN222.ViewModels.EditProfile
 
-<div class="container mt-5">
-    <div class="card shadow-lg border-0" style="border-radius:20px; max-width:700px; margin:auto;">
+<div class="container py-5">
+    <div class="main-card shadow-sm mx-auto p-4">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold">Cập nhật hồ sơ</h4>
+            <div class="h-line mx-auto"></div>
+        </div>
 
-        <div class="card-body p-4">
+        <form asp-controller="Users" asp-action="EditProfile" method="post">
+            @Html.AntiForgeryToken()
 
-            <div class="text-center mb-4">
-                <h3 class="fw-bold text-success">✏️ Chỉnh sửa thông tin</h3>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label-custom">Họ</label>
+                    <input asp-for="LastName" class="form-control-custom" placeholder="Ví dụ: Nguyễn" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-custom">Tên</label>
+                    <input asp-for="FirstName" class="form-control-custom" placeholder="Ví dụ: An" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label-custom">Số điện thoại</label>
+                    <input asp-for="Phone" class="form-control-custom" placeholder="09xxxxxxxx" />
+                    <span asp-validation-for="Phone" class="text-danger x-small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label-custom">Giới tính</label>
+                    <select asp-for="Gender" class="form-select-custom">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label-custom">Ngày sinh</label>
+                    <input asp-for="BirthDay" type="date" class="form-control-custom" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label-custom">Địa chỉ</label>
+                    <textarea asp-for="Address" rows="2" class="form-control-custom" placeholder="Số nhà, đường, phường/xã..."></textarea>
+                </div>
             </div>
 
-            <form asp-controller="Users" asp-action="EditProfile" method="post">
-
-                <div class="row g-3">
-
-                    <div class="col-md-6">
-                        <label class="fw-bold">Họ</label>
-                        <input asp-for="LastName" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="fw-bold">Tên</label>
-                        <input asp-for="FirstName" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="fw-bold">Số điện thoại</label>
-                        <input asp-for="Phone" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="fw-bold">Giới tính</label>
-                        <select asp-for="Gender" class="form-select">
-                            <option value="Nam">Nam</option>
-                            <option value="Nữ">Nữ</option>
-                            <option value="Khác">Khác</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="fw-bold">Ngày sinh</label>
-                        <input asp-for="BirthDay" type="date" class="form-control" />
-                    </div>
-
-                    <div class="col-12">
-                        <label class="fw-bold">Địa chỉ</label>
-                        <input asp-for="Address" class="form-control" />
-                    </div>
-
-                </div>
-
-                <div class="mt-4 d-flex justify-content-between">
-                    <a asp-action="Profile" class="btn btn-secondary">
-                        ← Quay lại
-                    </a>
-
-                    <button type="submit" class="btn btn-success px-4">
-                        💾 Lưu thay đổi
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
+            <div class="mt-4 pt-3 border-top d-flex justify-content-center gap-2">
+                <a asp-action="Profile" class="btn btn-cancel">Hủy</a>
+                <button type="submit" class="btn btn-save px-5">Lưu thay đổi</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<style>
+    .main-card {
+        max-width: 550px;
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #eee;
+    }
+
+    .h-line {
+        width: 40px;
+        height: 4px;
+        background: #00b4d8;
+        border-radius: 10px;
+    }
+
+    .form-label-custom {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #555;
+        margin-bottom: 5px;
+        margin-left: 2px;
+    }
+
+    .form-control-custom, .form-select-custom {
+        width: 100%;
+        padding: 10px 15px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        background: #f9f9f9;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+        .form-control-custom:focus {
+            background: #fff;
+            border-color: #00b4d8;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+        }
+
+    .btn-save {
+        background: #0077b6;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .btn-cancel {
+        background: #f5f5f5;
+        color: #666;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .x-small {
+        font-size: 0.75rem;
+    }
+</style>

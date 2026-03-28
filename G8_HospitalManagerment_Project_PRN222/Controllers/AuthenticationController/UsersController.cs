@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using G8_HospitalManagerment_Project_PRN222.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using G8_HospitalManagerment_Project_PRN222.Models;
-using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
+using Microsoft.Identity.Client.Extensions.Msal;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
@@ -53,7 +59,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         }
 
         // Đăng Kí
-        
+
 
         // GET: Users/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -72,9 +78,6 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             return View(user);
         }
 
-        // POST: Users/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("UserId,FirstName,LastName,Email,Phone,Gender,BirthDay,Address,UserRoleId,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] User user)
@@ -149,20 +152,21 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
 
 
-
+        [Authorize(Roles = "Patient")]
         [HttpGet]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null) return RedirectToAction("Login", "Authentication");
 
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Authentication");
-            }
+            int userId = int.Parse(userIdStr);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
 
-            var user = _context.Users
-                .Include(u => u.UserRole)
-                .FirstOrDefault(u => u.UserId == userId);
+            // Kiểm tra các phương thức đăng nhập của user này
+            var auths = await _context.Authentications.Where(a => a.UserId == userId).ToListAsync();
+
+            ViewBag.IsGoogle = auths.Any(a => a.AuthType == "google");
+            ViewBag.HasLocalPass = auths.Any(a => a.AuthType == "local" && !string.IsNullOrEmpty(a.Password));
 
             return View(user);
         }
@@ -171,51 +175,99 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [HttpGet]
         public IActionResult EditProfile()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-
-            if (userId == null)
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null)
             {
                 return RedirectToAction("Login", "Authentication");
             }
 
+            int userId = int.Parse(userIdStr);
             var user = _context.Users.Find(userId);
 
-            return View(user);
+            if (user == null) return NotFound();
+
+            // 🔥 SỬA: Chuyển từ kiểu 'User' sang 'EditProfile' trước khi trả về View
+            var model = new EditProfile
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Phone = user.Phone,
+                Gender = user.Gender,
+                BirthDay = user.BirthDay,
+                Address = user.Address
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult EditProfile(EditProfile model)
+        public async Task<IActionResult> ForgotPassword(string email)
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
+            TempData["EnteredEmail"] = email;
 
-            if (userId == null)
+            if (string.IsNullOrEmpty(email))
             {
-                return RedirectToAction("Login", "Authentication");
+                TempData["Error"] = "Vui lòng nhập email!";
+                return RedirectToAction("ForgotPassword");
             }
 
-            var user = _context.Users.FirstOrDefault(u => u.UserId == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
             {
-                return NotFound();
+                TempData["Error"] = "Email không tồn tại trong hệ thống!";
+                return RedirectToAction("ForgotPassword");
             }
 
-            if (!ModelState.IsValid)
+            // Kiểm tra tài khoản Google...
+            var authMethods = await _context.Authentications
+                .Where(a => a.UserId == user.UserId)
+                .Select(a => a.AuthType)
+                .ToListAsync();
+
+            if (authMethods.Contains("google") && !authMethods.Contains("local"))
             {
-                return View(model);
+                TempData["IsGoogleOnly"] = true;
+                TempData["Error"] = "Tài khoản này dùng Google. Hãy đăng nhập bằng Google!";
+                return RedirectToAction("ForgotPassword");
             }
 
-            // ✅ Update only allowed fields
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.Phone = model.Phone;
-            user.Gender = model.Gender;
-            user.BirthDay = model.BirthDay;
-            user.Address = model.Address;
-            _context.SaveChanges();
+            // Nếu mọi thứ hợp lệ, chuyển sang trang ResetPassword
+            if (authMethods.Contains("local"))
+            {
+                HttpContext.Session.SetString("ResetEmail", email);
+                return RedirectToAction("ResetPassword");
+            }
 
-            return RedirectToAction("Profile");
+            return RedirectToAction("ForgotPassword");
+        }
+        public async Task Storage(StorageInfo storage)
+        {
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, storage.UserId.ToString()),
+        new Claim(ClaimTypes.Email, storage.Email),
+        new Claim(ClaimTypes.Name, $"{storage.FirstName} {storage.LastName}"),
+        new Claim(ClaimTypes.Role, storage.RoleName ?? "Patient"),
+        new Claim("AuthType", storage.AuthType ?? "local")
+    };
+
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true, // giữ login
+                    ExpiresUtc = DateTime.UtcNow.AddHours(3)
+                });
         }
     }
 }
