@@ -230,37 +230,118 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
                 return NotFound();
             }
 
-            // 2. Kiểm tra điều kiện: Đã có hồ sơ bệnh án hoặc hóa đơn chưa?
-            // Chúng ta kiểm tra trong bảng MedicalRecords và Invoices
+            // 2. KIỂM TRA ĐIỀU KIỆN CHẶN XÓA
+            // Chỉ chặn khi đã phát sinh Hồ sơ khám bệnh hoặc Hóa đơn.
             bool hasMedicalHistory = await _context.MedicalRecords.AnyAsync(m => m.PatientId == id);
             bool hasInvoices = await _context.Invoices.AnyAsync(i => i.PatientId == id);
 
             if (hasMedicalHistory || hasInvoices)
             {
-                // Nếu đã khám (có hồ sơ hoặc hóa đơn), không cho xóa và báo lỗi
-                TempData["Error"] = "Không thể xóa bệnh nhân này vì đã có lịch sử khám bệnh hoặc hóa đơn phát sinh!";
+                TempData["Error"] = "Không thể xóa bệnh nhân này vì đã có Hồ sơ bệnh án hoặc Hóa đơn phát sinh!";
                 return RedirectToAction(nameof(Index));
             }
 
-            // 3. Nếu chưa có dữ liệu liên quan, tiến hành xóa
+            // 3. NẾU THỎA MÃN ĐIỀU KIỆN XÓA
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Bước 3.1: Dọn dẹp các Lịch hẹn (Appointments) chưa khám của bệnh nhân này
+                // (Để tránh lỗi Foreign Key Constraint trong Database)
+                var pendingAppointments = await _context.Appointments
+                                                .Where(a => a.PatientId == id)
+                                                .ToListAsync();
+                if (pendingAppointments.Any())
+                {
+                    _context.Appointments.RemoveRange(pendingAppointments);
+                }
+
+                // Bước 3.2: Xóa bệnh nhân (hoặc soft-delete tùy logic thiết kế của bạn)
                 _context.Patients.Remove(patient);
+
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                // Thông báo thành công
-                TempData["Success"] = "Xóa bệnh nhân thành công.";
+                TempData["Success"] = "Xóa bệnh nhân và các lịch hẹn (nếu có) thành công.";
 
-                // Phát tín hiệu SignalR để cập nhật các màn hình khác
-                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                // Phát tín hiệu SignalR để cập nhật các màn hình khác (Ví dụ: màn Lễ tân, Bác sĩ)
+                if (_hubContext != null)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                }
             }
             catch (Exception ex)
             {
-                TempData["Error"] = "Có lỗi xảy ra khi xóa: Không thể xóa bệnh nhân này vì đã có lịch sử khám bệnh hoặc hóa đơn phát sinh!" ;
+                await transaction.RollbackAsync();
+                // In ra ex.Message để lúc dev dễ fix bug, lúc release có thể ẩn đi
+                TempData["Error"] = $"Có lỗi xảy ra khi xóa trong Database: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
         }
+
+        // POST: Patients/Delete/5
+        //[HttpPost, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> DeleteConfirmed1(int id)
+        //{
+        //    // 1. Tìm bệnh nhân
+        //    var patient = await _context.Patients.FindAsync(id);
+        //    if (patient == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    // 2. KIỂM TRA ĐIỀU KIỆN CHẶN XÓA
+        //    bool hasMedicalHistory = await _context.MedicalRecords.AnyAsync(m => m.PatientId == id);
+        //    bool hasInvoices = await _context.Invoices.AnyAsync(i => i.PatientId == id);
+
+        //    // THÊM MỚI: Kiểm tra xem có Lịch hẹn nào đang ở trạng thái KHÁC "Pending" và "Cancelled" không?
+        //    // (Ví dụ có lịch đang "Confirmed" hoặc "Completed" thì gán biến này = true)
+        //    bool hasActiveAppointments = await _context.Appointments
+        //        .AnyAsync(a => a.PatientId == id && a.Status != "Pending" && a.Status != "Cancelled");
+
+        //    // Nếu dính 1 trong 3 điều kiện trên -> Chặn xóa
+        //    if (hasMedicalHistory || hasInvoices || hasActiveAppointments)
+        //    {
+        //        TempData["Error"] = "Không thể xóa Bệnh nhân này vì đang có lịch hẹn đã được xác nhận, hoặc đã có Hồ sơ khám/Hóa đơn!";
+        //        return RedirectToAction(nameof(Index));
+        //    }
+
+        //    // 3. NẾU THỎA MÃN ĐIỀU KIỆN XÓA (Chỉ có lịch hẹn Pending/Cancelled hoặc không có gì)
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        // Bước 3.1: Dọn dẹp các Lịch hẹn Pending/Cancelled của bệnh nhân này để tránh lỗi khóa ngoại
+        //        var appointmentsToDelete = await _context.Appointments
+        //                                        .Where(a => a.PatientId == id)
+        //                                        .ToListAsync();
+        //        if (appointmentsToDelete.Any())
+        //        {
+        //            _context.Appointments.RemoveRange(appointmentsToDelete);
+        //        }
+
+        //        // Bước 3.2: Xóa bệnh nhân
+        //        _context.Patients.Remove(patient);
+
+        //        await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+
+        //        TempData["Success"] = "Xóa bệnh nhân và các lịch hẹn (chờ/đã hủy) thành công.";
+
+        //        // Phát tín hiệu SignalR 
+        //        if (_hubContext != null)
+        //        {
+        //            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        TempData["Error"] = $"Có lỗi xảy ra khi xóa trong Database: {ex.Message}";
+        //    }
+
+        //    return RedirectToAction(nameof(Index));
+        //}
 
         [HttpGet]
         public async Task<IActionResult> ExportExcel()
