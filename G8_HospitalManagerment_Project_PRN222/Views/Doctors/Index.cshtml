@@ -9,18 +9,6 @@
         <h2 class="text-primary"><i class="bi bi-person-badge"></i> Quản lý Bác sĩ</h2>
 
         <div>
-            <div class="card p-3 shadow-sm mb-4">
-                <h5 class="text-warning"><i class="bi bi-file-earmark-arrow-up"></i> Import dữ liệu từ Excel</h5>
-                <form asp-action="Import" method="post" enctype="multipart/form-data" class="row g-3">
-                    <div class="col-md-9">
-                        <input type="file" name="file" class="form-control" accept=".xlsx" required />
-                        <div class="form-text">Lưu ý: File phải có đủ 5 cột: Mã NV, Họ Tên, Chuyên khoa, Kinh nghiệm, Số GP.</div>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-warning w-100 fw-bold">Bắt đầu Import</button>
-                    </div>
-                </form>
-            </div>
             <a asp-action="Export" class="btn btn-primary shadow-sm">
                 <i class="bi bi-file-earmark-excel"></i> Tải Excel (TCP Server)
             </a>
