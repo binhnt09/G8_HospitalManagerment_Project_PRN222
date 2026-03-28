@@ -9,8 +9,16 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services
-builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
+builder.Services.AddControllersWithViews()
+    .AddNewtonsoftJson(options =>
+    {
+        // Giúp tránh lỗi vòng lặp dữ liệu (Doctor -> Employee -> Doctor)
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+
+        // Giữ nguyên tên trường như trong C# (PascalCase) thay vì bị đổi thành camelCase
+        options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
+    });
 
 builder.Services.AddDbContext<DbHospitalManagementContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
@@ -52,6 +60,15 @@ builder.Services.AddAuthentication(options =>
     options.CorrelationCookie.SameSite = SameSiteMode.Unspecified;
     options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 builder.Services.AddAuthorization();
 
@@ -63,6 +80,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

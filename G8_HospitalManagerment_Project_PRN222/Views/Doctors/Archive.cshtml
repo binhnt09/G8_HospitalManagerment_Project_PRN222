@@ -1,0 +1,35 @@
+﻿@using G8_HospitalManagerment_Project_PRN222.Models.ViewModels
+@model IEnumerable<DoctorViewModel>
+
+<div class="container mt-4">
+    <h2><i class="bi bi-archive"></i> Danh sách bác sĩ đã lưu trữ</h2>
+    <hr />
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Mã NV</th>
+                <th>Họ Tên</th>
+                <th>Chuyên khoa</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.EmployeeCode</td>
+                    <td>@item.FullName</td>
+                    <td>@item.Specialization</td>
+                    <td>
+                        <form asp-action="Restore" asp-route-id="@item.DoctorId" method="post">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="bi bi-arrow-counterclockwise"></i> Khôi phục
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại trang chính</a>
+</div>

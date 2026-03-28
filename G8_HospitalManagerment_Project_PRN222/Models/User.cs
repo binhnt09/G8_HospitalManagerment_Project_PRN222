@@ -13,6 +13,8 @@ public partial class User
 
     public string? Email { get; set; }
 
+    public bool Verified { get; set; } = false;
+
     public string? Phone { get; set; }
 
     public string? Gender { get; set; }

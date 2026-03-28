@@ -1,65 +1,156 @@
 ﻿@model G8_HospitalManagerment_Project_PRN222.Models.User
+@{
+    bool isGoogle = ViewBag.IsGoogle ?? false;
+    bool hasLocalPass = ViewBag.HasLocalPass ?? false;
+}
 
-<div class="container mt-5">
-    <div class="card shadow-lg border-0" style="border-radius:20px; max-width:700px; margin:auto;">
+<div class="container py-5">
+    <div class="main-card shadow-sm mx-auto">
+        <div class="header-section text-center">
+            <div class="avatar-box">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h4 class="fw-bold m-0">@Model.FirstName @Model.LastName</h4>
+            <div class="mt-2">
+                <span class="badge-custom @(isGoogle ? "bg-google" : "bg-local")">
+                    <i class="fab @(isGoogle ? "fa-google" : "fa-shield-alt") me-1"></i>
+                    @(isGoogle ? "Google Account" : "Tài khoản hệ thống")
+                </span>
+            </div>
+        </div>
 
-        <div class="card-body p-4">
-
-            <div class="text-center mb-4">
-                <h3 class="fw-bold text-primary">👤 Thông tin cá nhân</h3>
+        <div class="content-section p-4">
+            <div class="info-group-box mb-4">
+                <h6 class="group-title">Tài khoản & Liên lạc</h6>
+                <div class="d-flex justify-content-between py-2 border-bottom-dashed">
+                    <span class="text-muted">Email</span>
+                    <span class="fw-500">@Model.Email</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">Số điện thoại</span>
+                    <span class="fw-500 @(string.IsNullOrEmpty(Model.Phone) ? "text-danger" : "")">
+                        @(Model.Phone ?? "Chưa có")
+                    </span>
+                </div>
             </div>
 
-            <div class="row g-3">
-
-                <div class="col-md-6">
-                    <label class="fw-bold">Họ</label>
-                    <div class="form-control bg-light">@Model.LastName</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="fw-bold">Tên</label>
-                    <div class="form-control bg-light">@Model.FirstName</div>
-                </div>
-
-                <div class="col-12">
-                    <label class="fw-bold">Email</label>
-                    <div class="form-control bg-light">@Model.Email</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="fw-bold">Số điện thoại</label>
-                    <div class="form-control bg-light">@Model.Phone</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="fw-bold">Giới tính</label>
-                    <div class="form-control bg-light">@Model.Gender</div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="fw-bold">Ngày sinh</label>
-                    <div class="form-control bg-light">
-                        @Model.BirthDay?.ToString("dd/MM/yyyy")
+            <div class="info-group-box mb-4">
+                <h6 class="group-title">Chi tiết cá nhân</h6>
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <small class="text-muted d-block">Giới tính</small>
+                        <span class="fw-500">@(Model.Gender ?? "---")</span>
+                    </div>
+                    <div class="col-6 ps-4">
+                        <small class="text-muted d-block">Ngày sinh</small>
+                        <span class="fw-500">@(Model.BirthDay?.ToString("dd/MM/yyyy") ?? "---")</span>
                     </div>
                 </div>
-
-                <div class="col-12">
-                    <label class="fw-bold">Địa chỉ</label>
-                    <div class="form-control bg-light">@Model.Address</div>
-                </div>
-
             </div>
 
-            <div class="mt-4 d-flex justify-content-between">
-                <a asp-action="EditProfile" class="btn btn-primary px-4">
-                    ✏️ Chỉnh sửa
-                </a>
-
-                <a asp-controller="Authentication" asp-action="ChangePassword" class="btn btn-warning px-4">
-                    🔐 Đổi mật khẩu
-                </a>
+            <div class="info-group-box">
+                <h6 class="group-title">Địa chỉ cư trú</h6>
+                <p class="m-0 fw-500 @(string.IsNullOrEmpty(Model.Address) ? "text-muted small italic" : "")">
+                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                    @(Model.Address ?? "Vui lòng cập nhật địa chỉ để tiện đặt lịch")
+                </p>
             </div>
+        </div>
 
+        <div class="footer-section p-4 pt-0 d-flex justify-content-center gap-2">
+            <a asp-action="EditProfile" class="btn btn-primary-custom px-4">Chỉnh sửa</a>
+
+            @if (isGoogle && !hasLocalPass)
+            {
+                <a asp-controller="Authentication" asp-action="CreatePassword" class="btn btn-success-custom px-4">Tạo mật khẩu</a>
+            }
+            else if (hasLocalPass)
+            {
+                <a asp-controller="Authentication" asp-action="ChangePassword" class="btn btn-light px-4 border">Đổi mật khẩu</a>
+            }
         </div>
     </div>
 </div>
+
+<style>
+    .main-card {
+        max-width: 550px;
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #eee;
+    }
+
+    .header-section {
+        background: #f8fbff;
+        padding: 30px 20px;
+        border-bottom: 1px solid #edf2f7;
+    }
+
+    .avatar-box {
+        font-size: 4rem;
+        color: #0077b6;
+        line-height: 1;
+    }
+
+    .badge-custom {
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .bg-google {
+        background: #4285F4;
+    }
+
+    .bg-local {
+        background: #00b4d8;
+    }
+
+    .info-group-box {
+        background: #fcfcfc;
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    .group-title {
+        font-size: 0.7rem;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+
+    .border-bottom-dashed {
+        border-bottom: 1px dashed #eee;
+    }
+
+    .fw-500 {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .btn-primary-custom {
+        background: #0077b6;
+        color: white;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+    }
+
+    .btn-success-custom {
+        background: #2a9d8f;
+        color: white;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+    }
+
+    .italic {
+        font-style: italic;
+    }
+</style>

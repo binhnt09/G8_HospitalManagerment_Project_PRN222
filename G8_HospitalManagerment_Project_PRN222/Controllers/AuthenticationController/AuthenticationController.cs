@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using MailKit.Net.Smtp;
+using MimeKit;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
@@ -49,25 +51,45 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel userInfo)
         {
+            // 1. Kiểm tra tính hợp lệ cơ bản (Required, EmailAddress...)
             if (!ModelState.IsValid)
             {
                 ViewBag.Mode = "register";
                 return View("Index", userInfo);
             }
+
+            // 2. Kiểm tra khớp mật khẩu
             if (userInfo.Password != userInfo.ConfirmPassword)
             {
-                ViewBag.RegisterError = "Mật khẩu không khớp";
-                ViewBag.Mode = "register";
-                return View("Index", userInfo);
-            }
-            var existingUser = _context.Users.FirstOrDefault(u => u.Email == userInfo.Email);
-            if (existingUser != null)
-            {
-                ViewBag.RegisterError = "Email đã tồn tại!";
+                ModelState.AddModelError("ConfirmPassword", "Mật khẩu xác nhận không khớp.");
                 ViewBag.Mode = "register";
                 return View("Index", userInfo);
             }
 
+            // 3. Kiểm tra trùng lặp Email hoặc Số điện thoại trong DB
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == userInfo.Email || u.Phone == userInfo.Phone);
+
+            if (existingUser != null)
+            {
+                if (existingUser.Email == userInfo.Email)
+                {
+                    // Thêm lỗi vào ModelState để View hiển thị ở phần tổng hợp và dưới ô Email
+                    ModelState.AddModelError("Email", "Email này đã được đăng ký sử dụng.");
+                    ViewBag.RegisterError = "Email đã tồn tại!";
+                }
+                else if (existingUser.Phone == userInfo.Phone)
+                {
+                    // Thêm lỗi vào ModelState để hiển thị dưới ô Phone
+                    ModelState.AddModelError("Phone", "Số điện thoại này đã được đăng ký sử dụng.");
+                    ViewBag.RegisterError = "Số điện thoại đã tồn tại!";
+                }
+
+                ViewBag.Mode = "register";
+                return View("Index", userInfo);
+            }
+
+            // 4. Tạo thực thể User
             var user = new User
             {
                 Email = userInfo.Email,
@@ -77,24 +99,112 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 Gender = userInfo.Gender,
                 BirthDay = userInfo.BirthDay,
                 Address = userInfo.Address,
-                UserRoleId = 7
+                UserRoleId = 7,
+                Verified = false
             };
 
             _context.Users.Add(user);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            var authentication = new Authentication
+            // 5. Tạo thông tin xác thực
+            var auth = new Authentication
             {
                 UserId = user.UserId,
                 Password = HashPassword(userInfo.Password),
-                AuthType = "local",
-                ProviderKey = ""
+                AuthType = "local"
             };
 
-            _context.Authentications.Add(authentication);
-            _context.SaveChanges();
+            _context.Authentications.Add(auth);
+            await _context.SaveChangesAsync();
 
-            await Storage(user);
+            // 6. Quy trình xác thực Email
+            var encodedEmail = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email));
+            var verifyLink = Url.Action("VerifyEmail", "Authentication", new { data = encodedEmail }, Request.Scheme);
+
+            string htmlMessage = $@"
+    <h2>Chào mừng bạn đến với ChildrenCare!</h2>
+    <p>Vui lòng nhấn vào đường link bên dưới để xác thực tài khoản của bạn:</p>
+    <a href='{verifyLink}'>Xác nhận Email ngay</a>";
+
+            await SendEmailAsync(user.Email, "Xác thực tài khoản ChildrenCare", htmlMessage);
+
+            // Sau đó mới redirect
+            TempData["Email"] = user.Email;
+            return RedirectToAction("VerifyNotice");
+        }
+
+
+
+        private async Task SendEmailAsync(string email, string subject, string message)
+        {
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("ChildrenCare System", "your-gmail@gmail.com"));
+            emailMessage.To.Add(new MailboxAddress("", email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart("html") { Text = message };
+
+            using (var client = new SmtpClient())
+            {
+                // Kết nối với server Gmail (Port 587 cho TLS)
+                await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+
+                // Đăng nhập (Sử dụng App Password của Gmail, không phải mật khẩu chính)
+                await client.AuthenticateAsync("he181465dangnguyenhieu@gmail.com", "wgml msqt spfo kfet");
+
+                await client.SendAsync(emailMessage);
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult VerifyNotice()
+        {
+            return View();
+        }
+        [HttpGet]
+        public async Task<IActionResult> VerifyEmail(string data)
+        {
+            if (string.IsNullOrEmpty(data))
+                return Content("Link không hợp lệ!");
+
+            string email;
+
+            try
+            {
+                var bytes = Convert.FromBase64String(data);
+                email = Encoding.UTF8.GetString(bytes);
+            }
+            catch
+            {
+                return Content("Link không hợp lệ!");
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+                return Content("User không tồn tại!");
+
+            // ✅ verify
+            user.Verified = true;
+            await _context.SaveChangesAsync();
+
+            // ✅ login luôn
+            var roleName = await _context.UserRoles
+                .Where(r => r.UserRoleId == user.UserRoleId)
+                .Select(r => r.RoleName)
+                .FirstOrDefaultAsync() ?? "Patient";
+
+            await Storage(new StorageInfo
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserRoleId = user.UserRoleId,
+                Email = user.Email,
+                RoleName = roleName,
+                AuthType = "local"
+            });
 
             return RedirectToAction("Index", "Home");
         }
@@ -107,32 +217,31 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(RegisterViewModel model)
         {
             if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
             {
                 ViewBag.LoginError = "Vui lòng nhập đầy đủ thông tin!";
-                ViewBag.Mode = "login";
-                return View("Index", model);
+                ViewBag.Mode = "login"; return View("Index", model);
             }
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == model.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user == null) { ViewBag.LoginError = "Email không tồn tại!"; ViewBag.Mode = "login"; return View("Index", model); }
 
-            if (user == null)
+            if (!user.Verified)
             {
-                ViewBag.LoginError = "Email không tồn tại!";
+                ViewBag.LoginError = "Tài khoản chưa được xác thực email.";
+                ViewBag.ShowResend = true; // Hiện nút Resend ở View
+                ViewBag.UnverifiedEmail = user.Email;
                 ViewBag.Mode = "login";
                 return View("Index", model);
             }
 
-            var auth = await _context.Authentications
-                .FirstOrDefaultAsync(a => a.UserId == user.UserId);
-
+            var auth = await _context.Authentications.FirstOrDefaultAsync(a => a.UserId == user.UserId && a.AuthType == "local");
             if (auth == null)
             {
-                ViewBag.LoginError = "Tài khoản chưa có thông tin xác thực!";
+                ViewBag.LoginError = "Tài khoản này dùng Google!";
                 ViewBag.Mode = "login";
                 return View("Index", model);
             }
@@ -144,9 +253,34 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 return View("Index", model);
             }
 
-            await Storage(user);
+            var roleName = await _context.UserRoles.Where(r => r.UserRoleId == user.UserRoleId).Select(r => r.RoleName).FirstOrDefaultAsync() ?? "Patient";
+            await Storage(new StorageInfo
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                RoleName = roleName,
+                AuthType = "local"
+            });
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendVerifyEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null && !user.Verified)
+            {
+                var encodedEmail = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email));
+                var verifyLink = Url.Action("VerifyEmail", "Authentication", new { data = encodedEmail }, Request.Scheme);
+                await SendEmailAsync(user.Email, "Gửi lại xác thực tài khoản", $"<p>Link mới: <a href='{verifyLink}'>Xác thực ngay</a></p>");
+                TempData["ResendSuccess"] = "Đã gửi lại email xác thực thành công!";
+            }
+            ViewBag.Mode = "login";
+            return View("Index", new RegisterViewModel { Email = email });
         }
 
         [HttpGet]
@@ -162,78 +296,113 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         [HttpGet]
         public async Task<IActionResult> GoogleResponse()
         {
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var result = await HttpContext.AuthenticateAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (!result.Succeeded)
                 return RedirectToAction("Login", new { mode = "login" });
 
-            // Lấy các Claims (thông tin) từ Google
-            var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
+            var claims = result.Principal?.Identities.FirstOrDefault()?.Claims;
+
             var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
             var firstName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
             var lastName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
-            var nameIdentifier = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var providerKey = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Login");
 
-            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
-
-            // KIỂM TRA DATABASE
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            // 1. Tìm user theo email
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
             {
-                // Nếu chưa có user -> Tạo mới (Đăng ký tự động)
+                // 2. Auto register
                 user = new User
                 {
                     Email = email,
                     FirstName = firstName ?? "Google",
                     LastName = lastName ?? "User",
-                    UserRoleId = 1,
+                    UserRoleId = 7
                 };
+
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
+            }
 
-                // Tạo bản ghi Authentication cho Google
-                var auth = new Authentication
+            // 3. Kiểm tra Authentication (Google): 
+            var googleAuth = await _context.Authentications
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == user.UserId &&
+                    x.AuthType == "google");
+
+            if (googleAuth == null)
+            {
+                googleAuth = new Authentication
                 {
                     UserId = user.UserId,
                     AuthType = "google",
                     Password = "",
-                    ProviderKey = nameIdentifier
+                    ProviderKey = providerKey
                 };
-                _context.Authentications.Add(auth);
+
+                _context.Authentications.Add(googleAuth);
                 await _context.SaveChangesAsync();
             }
 
-            await Storage(user);
+            // 4. Lấy role 1 lần (tối ưu)
+            var roleName = await _context.UserRoles
+                .Where(r => r.UserRoleId == user.UserRoleId)
+                .Select(r => r.RoleName)
+                .FirstOrDefaultAsync() ?? "Patient";
 
+            // 5. Lưu session (Claims)
+            await Storage(new StorageInfo
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserRoleId = user.UserRoleId,
+                Email = user.Email,
+                RoleName = roleName,
+                AuthType = "google"
+            });
 
             return RedirectToAction("Index", "Home");
         }
 
-        public async Task Storage(User user)
+
+        public async Task Storage(StorageInfo storage)
         {
-            var claimsCookie = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // ID hệ thống
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
-                new Claim(ClaimTypes.Role, user.UserRoleId.ToString()) // nếu có role
-            };
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, storage.UserId.ToString()),
+        new Claim(ClaimTypes.Email, storage.Email),
+        new Claim(ClaimTypes.Name, $"{storage.FirstName} {storage.LastName}"),
+        new Claim(ClaimTypes.Role, storage.RoleName ?? "Patient"),
+        new Claim("AuthType", storage.AuthType ?? "local")
+    };
 
             var identity = new ClaimsIdentity(
-                claimsCookie,
+                claims,
                 CookieAuthenticationDefaults.AuthenticationScheme
             );
+
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                principal
-            );
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true, // giữ login
+                    ExpiresUtc = DateTime.UtcNow.AddHours(3)
+                });
         }
 
         [HttpGet]
+        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult ForgotPassword()
         {
             return View();
@@ -241,24 +410,71 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ForgotPassword(string email)
+        public async Task<IActionResult> ForgotPassword(string email)
         {
-            if (string.IsNullOrEmpty(email))
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null || !await _context.Authentications.AnyAsync(a => a.UserId == user.UserId && a.AuthType == "local"))
             {
-                ViewBag.Error = "Vui lòng nhập email!";
+                TempData["Error"] = "Email không tồn tại hoặc đăng nhập bằng Google!";
                 return View();
             }
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            // 1. Vô hiệu hóa các mã OTP cũ của email này (nếu có)
+            var oldResets = _context.PasswordResets.Where(r => r.Email == email && r.IsUsed == false);
+            foreach (var old in oldResets) { old.IsUsed = true; }
 
-            if (user == null)
+            // 2. Tạo mã OTP mới
+            string otp = new Random().Next(100000, 999999).ToString();
+
+            // 3. Lệnh INSERT vào bảng PasswordResets
+            var pwdReset = new PasswordReset // Giả sử bạn đã tạo Model này
             {
-                ViewBag.Error = "Email không tồn tại!";
-                return View();
-            }
+                Email = email,
+                OtpCode = otp,
+                ExpiryTime = DateTime.Now.AddMinutes(5),
+                IsUsed = false
+            };
+            _context.PasswordResets.Add(pwdReset);
+            await _context.SaveChangesAsync();
+
+            // 4. Gửi Mail
+            await SendEmailAsync(email, "Mã OTP đặt lại mật khẩu", $"Mã của bạn là: <b>{otp}</b>");
+
+            // Vẫn dùng Session để lưu Email để bước sau biết đang verify cho ai
             HttpContext.Session.SetString("ResetEmail", email);
-            HttpContext.Session.SetString("ResetExpire", DateTime.UtcNow.AddMinutes(10).ToString());
-            return RedirectToAction("ResetPassword");
+            return RedirectToAction("VerifyOTP");
+        }
+        [HttpGet]
+        public IActionResult VerifyOTP()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyOTP(string otp)
+        {
+            var email = HttpContext.Session.GetString("ResetEmail");
+
+            // Tìm mã OTP mới nhất, chưa dùng và chưa hết hạn trong DB
+            var resetRequest = await _context.PasswordResets
+                .Where(r => r.Email == email && r.OtpCode == otp && r.IsUsed == false && r.ExpiryTime > DateTime.Now)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (resetRequest != null)
+            {
+                // Đánh dấu đã sử dụng mã này
+                resetRequest.IsUsed = true;
+                await _context.SaveChangesAsync();
+
+                // Cấp quyền sang trang ResetPassword
+                HttpContext.Session.SetString("Verified", "true");
+                return RedirectToAction("ResetPassword");
+            }
+
+            ViewBag.Error = "Mã OTP không chính xác hoặc đã hết hạn!";
+            return View();
         }
 
         [HttpGet]
@@ -332,9 +548,12 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             {
                 return RedirectToAction("Login", "Authentication");
             }
-
             int userId = int.Parse(userIdStr);
 
+            var isGoogle = _context.Authentications
+                .Any(x => x.UserId == userId && x.AuthType == "google");
+
+            ViewBag.IsGoogle = isGoogle;
             return View();
         }
 
@@ -395,6 +614,52 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult CreatePassword()
+        {
+            // Kiểm tra xem đã Login chưa
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null) return RedirectToAction("Login");
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePassword(SetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            // Kiểm tra xem đã có password local chưa (tránh tạo đè)
+            var existingAuth = await _context.Authentications
+                .AnyAsync(a => a.UserId == userId && a.AuthType == "local");
+
+            if (existingAuth)
+            {
+                return RedirectToAction("ChangePassword"); // Nếu có rồi thì sang trang đổi pass
+            }
+
+            // Tạo mới bản ghi Authentication Local
+            var newAuth = new Authentication
+            {
+                UserId = userId,
+                AuthType = "local",
+                Password = HashPassword(model.NewPassword) // Dùng hàm HashPassword của bạn
+            };
+
+            _context.Authentications.Add(newAuth);
+            await _context.SaveChangesAsync();
+
+            var user = _context.Users.FirstOrDefault(x => x.UserId == userId);
+            user.Verified = true;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Thiết lập mật khẩu thành công!";
+            return RedirectToAction("Profile", "Users");
         }
     }
 }
