@@ -29,7 +29,7 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-controller="Users" asp-action="Index">Người dùng</a>
+                                <a class="nav-link nav-link-custom" asp-area="" asp-controller="Patients" asp-action="Index">Người dùng</a>
                             </li>
                         }
                         @if ( User == null && !User.IsInRole("Patients"))
