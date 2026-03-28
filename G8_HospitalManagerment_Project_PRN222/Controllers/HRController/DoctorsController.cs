@@ -299,5 +299,76 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.HRController
         {
             return _context.Doctors.Any(e => e.DoctorId == id);
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Export()
+        {
+            try
+            {
+                using var client = new TcpClient("127.0.0.1", 13000);
+                using var stream = client.GetStream();
+
+                byte[] cmd = Encoding.UTF8.GetBytes("EXPORT_EXCEL|");
+                await stream.WriteAsync(cmd, 0, cmd.Length);
+
+                // Đọc Header 4 byte
+                byte[] h = new byte[4];
+                int hRead = 0;
+                while (hRead < 4)
+                {
+                    int r = await stream.ReadAsync(h, hRead, 4 - hRead);
+                    if (r == 0) throw new Exception("Ngắt kết nối Header");
+                    hRead += r;
+                }
+                int size = BitConverter.ToInt32(h, 0);
+
+                // Đọc Body (Vòng lặp quan trọng)
+                byte[] data = new byte[size];
+                int bRead = 0;
+                while (bRead < size)
+                {
+                    int r = await stream.ReadAsync(data, bRead, size - bRead);
+                    if (r == 0) break;
+                    bRead += r;
+                }
+
+                return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"BaoCao_BS_{DateTime.Now:ddMMyy}.xlsx");
+            }
+            catch (Exception ex) { return Content("Lỗi: " + ex.Message); }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Import(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return Content("File trống!");
+            try
+            {
+                byte[] fileBytes;
+                using (var ms = new MemoryStream()) { await file.CopyToAsync(ms); fileBytes = ms.ToArray(); }
+
+                using var client = new TcpClient("127.0.0.1", 13000);
+                using var stream = client.GetStream();
+
+                // 1. Gửi Lệnh "IMPORT_EXCEL" (Có Header độ dài lệnh)
+                string cmd = "IMPORT_EXCEL";
+                byte[] cmdBytes = Encoding.UTF8.GetBytes(cmd);
+                await stream.WriteAsync(BitConverter.GetBytes(cmdBytes.Length), 0, 4); // Header lệnh
+                await stream.WriteAsync(cmdBytes, 0, cmdBytes.Length); // Body lệnh
+
+                // 2. Gửi Độ dài file (4 byte)
+                await stream.WriteAsync(BitConverter.GetBytes(fileBytes.Length), 0, 4);
+
+                // 3. Gửi mảng byte của file
+                await stream.WriteAsync(fileBytes, 0, fileBytes.Length);
+
+                await stream.FlushAsync();
+                // Cho Server chút thời gian xử lý trước khi đóng using client
+                await Task.Delay(1000);
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex) { return Content("Lỗi: " + ex.Message); }
+        }
     }
 }

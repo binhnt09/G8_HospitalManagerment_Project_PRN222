@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using MailKit.Net.Smtp;
 using MimeKit;
+using Microsoft.EntityFrameworkCore.Update;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
@@ -36,7 +37,9 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             {
                 var bytes = Encoding.UTF8.GetBytes(password);
                 var hash = sha.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
+                var tmp = Convert.ToBase64String(hash);
+                Console.WriteLine("---------------------------------------"+ tmp);
+                return tmp;
             }
         }
 
@@ -226,8 +229,13 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 ViewBag.Mode = "login"; return View("Index", model);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
-            if (user == null) { ViewBag.LoginError = "Email không tồn tại!"; ViewBag.Mode = "login"; return View("Index", model); }
+            Console.WriteLine("-----------"+ model.Email + "----------------");
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Trim().Equals(model.Email.Trim()));
+            if (user == null) { 
+                ViewBag.LoginError = "Email không tồn tại!";
+                ViewBag.Mode = "login"; 
+                return View("Index", model); 
+            }
 
             if (!user.Verified)
             {
@@ -245,6 +253,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 ViewBag.Mode = "login";
                 return View("Index", model);
             }
+            // Kiểm tra độ dài: Chuỗi chuẩn phải là 44 ký tự
 
             if (auth.Password != HashPassword(model.Password))
             {
