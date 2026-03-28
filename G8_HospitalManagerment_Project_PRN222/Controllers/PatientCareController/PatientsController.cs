@@ -223,14 +223,42 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 1. Tìm bệnh nhân
             var patient = await _context.Patients.FindAsync(id);
-            if (patient != null)
+            if (patient == null)
             {
-                _context.Patients.Remove(patient);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            // 2. Kiểm tra điều kiện: Đã có hồ sơ bệnh án hoặc hóa đơn chưa?
+            // Chúng ta kiểm tra trong bảng MedicalRecords và Invoices
+            bool hasMedicalHistory = await _context.MedicalRecords.AnyAsync(m => m.PatientId == id);
+            bool hasInvoices = await _context.Invoices.AnyAsync(i => i.PatientId == id);
+
+            if (hasMedicalHistory || hasInvoices)
+            {
+                // Nếu đã khám (có hồ sơ hoặc hóa đơn), không cho xóa và báo lỗi
+                TempData["Error"] = "Không thể xóa bệnh nhân này vì đã có lịch sử khám bệnh hoặc hóa đơn phát sinh!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 3. Nếu chưa có dữ liệu liên quan, tiến hành xóa
+            try
+            {
+                _context.Patients.Remove(patient);
+                await _context.SaveChangesAsync();
+
+                // Thông báo thành công
+                TempData["Success"] = "Xóa bệnh nhân thành công.";
+
+                // Phát tín hiệu SignalR để cập nhật các màn hình khác
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra khi xóa: Không thể xóa bệnh nhân này vì đã có lịch sử khám bệnh hoặc hóa đơn phát sinh!" ;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
