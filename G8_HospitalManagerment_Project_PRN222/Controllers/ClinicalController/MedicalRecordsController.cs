@@ -222,18 +222,18 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 await transaction.CommitAsync();
 
                 // 5. BẮN SIGNALR REAL-TIME SAU KHI LƯU THÀNH CÔNG
-                //if (hasLabOrders)
-                //{
-                //    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Xét nghiệm
-                //    await _hubContext.Clients.Group("LabTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
-                //}
-                //if (hasImagingOrders)
-                //{
-                //    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Chẩn đoán hình ảnh
-                //    await _hubContext.Clients.Group("ImagingTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
-                //}
+                if (hasLabOrders)
+                {
+                    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Xét nghiệm
+                    await _hubContext.Clients.Group("LabTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
+                }
+                if (hasImagingOrders)
+                {
+                    // Gửi tin nhắn đến Group những người đang mở trang Kỹ thuật viên Chẩn đoán hình ảnh
+                    await _hubContext.Clients.Group("ImagingTechnicians").SendAsync("ReceiveNewOrder", newRecord.RecordId, model.PatientName);
+                }
 
-                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                //await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 TempData["Success"] = "Hồ sơ bệnh án đã được tạo thành công.";
 
                 // Redirect to prescription creation with the new RecordId

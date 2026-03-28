@@ -1,8 +1,11 @@
-﻿using G8_HospitalManagerment_Project_PRN222.Models;
+﻿using G8_HospitalManagerment_Project_PRN222.Hubs;
+using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
@@ -11,11 +14,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
     {
         private readonly ILabOrderService _service;
         private readonly DbHospitalManagementContext _context;
+        //private readonly HubConnection _hubContext;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public LabOrdersController(ILabOrderService service, DbHospitalManagementContext context)
+        public LabOrdersController(ILabOrderService service, DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
-                _service = service;
+            _service = service;
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: LabOrders
@@ -126,32 +132,37 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
             var labOrder = await _service.GetLabOrderDetailsAsync(id.Value);
             if (labOrder == null) return NotFound();
 
-            await PopulateDropdowns(labOrder);
             return View(labOrder);
         }
 
         // POST: LabOrders/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("OrderId,MedicalRecordId,PatientId,DoctorId,OrderDate,Status,Reason,CreatedAt,UpdatedAt,DeletedAt,IsDeleted")] LabOrder labOrder)
+        public async Task<IActionResult> Edit(int id, string Status) // Chỉ cần nhận ID và Status từ Form
         {
-            if (id != labOrder.OrderId) return NotFound();
+            // 1. Lấy phiếu xét nghiệm cũ lên
+            var existingOrder = await _service.GetLabOrderDetailsAsync(id);
+            if (existingOrder == null) return NotFound();
 
-            if (ModelState.IsValid)
+            // 2. Chỉ cập nhật Trạng thái và Ngày sửa
+            existingOrder.Status = Status;
+            existingOrder.UpdatedAt = DateTime.Now;
+
+            try
             {
-                try
+                await _service.UpdateLabOrderAsync(existingOrder);
+                if (_hubContext != null)
                 {
-                    await _service.UpdateLabOrderAsync(labOrder);
+                    //string fullName = existingOrder.Patient?.User?.FirstName + " " + existingOrder.Patient?.User?.LastName;
+                    await _hubContext.Clients.All.SendAsync("ReceiveLabOrderUpdate");
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_service.CheckLabOrderExists(labOrder.OrderId)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
             }
-            await PopulateDropdowns(labOrder);
-            return View(labOrder);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_service.CheckLabOrderExists(existingOrder.OrderId)) return NotFound();
+                else throw;
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: LabOrders/Delete/5
@@ -182,5 +193,25 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.LaboratoryController
             ViewData["MedicalRecordId"] = new SelectList(dropdownData.MedicalRecords, "RecordId", "RecordId", labOrder?.MedicalRecordId);
             ViewData["PatientId"] = new SelectList(dropdownData.Patients, "PatientId", "PatientId", labOrder?.PatientId);
         }
+
+        //private bool showToast = false;
+        //private string toastMessage = "";
+        //private async void ShowNotification(string message)
+        //{
+        //    toastMessage = message;
+        //    showToast = true;
+        //    StateHasChanged();
+
+        //    await Task.Delay(3000);
+        //    showToast = false;
+        //    StateHasChanged();
+        //}
+        //private void CloseToast() => showToast = false;
+
+        //// Dọn dẹp kết nối khi rời trang
+        //public async ValueTask DisposeAsync()
+        //{
+        //    if (_hubContext is not null) await _hubContext.DisposeAsync();
+        //}
     }
 }
