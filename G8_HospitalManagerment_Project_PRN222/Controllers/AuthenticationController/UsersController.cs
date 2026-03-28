@@ -1,4 +1,4 @@
-﻿using G8_HospitalManagerment_Project_PRN222.Models;
+using G8_HospitalManagerment_Project_PRN222.Models;
 using G8_HospitalManagerment_Project_PRN222.Models.ViewModels;
 using G8_HospitalManagerment_Project_PRN222.ViewModels;
 using Microsoft.AspNetCore.Authentication;
@@ -13,24 +13,82 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using G8_HospitalManagerment_Project_PRN222.Hubs;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationController
 {
     public class UsersController : Controller
     {
         private readonly DbHospitalManagementContext _context;
+        private readonly IHubContext<DataHub> _hubContext;
 
-        public UsersController(DbHospitalManagementContext context)
+        public UsersController(DbHospitalManagementContext context, IHubContext<DataHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: Users[
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int pg = 1)
         {
-            var dbHospitalManagementContext = _context.Users.Include(u => u.UserRole);
-            return View(await dbHospitalManagementContext.ToListAsync());
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "Name_desc" : "";
+            ViewBag.EmailSortParm = sortOrder == "Email" ? "Email_desc" : "Email";
+            ViewBag.RoleSortParm = sortOrder == "Role" ? "Role_desc" : "Role";
+            ViewBag.CurrentFilter = searchString;
+
+            var usersQuery = _context.Users.Include(u => u.UserRole).AsQueryable();
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                usersQuery = usersQuery.Where(u =>
+                    (u.FirstName != null && u.FirstName.Contains(searchString)) ||
+                    (u.LastName != null && u.LastName.Contains(searchString)) ||
+                    (u.Email != null && u.Email.Contains(searchString)) ||
+                    u.UserId.ToString().Contains(searchString));
+            }
+
+            switch (sortOrder)
+            {
+                case "Name_desc":
+                    usersQuery = usersQuery.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName);
+                    break;
+                case "Email":
+                    usersQuery = usersQuery.OrderBy(u => u.Email);
+                    break;
+                case "Email_desc":
+                    usersQuery = usersQuery.OrderByDescending(u => u.Email);
+                    break;
+                case "Role":
+                    usersQuery = usersQuery.OrderBy(u => u.UserRole.RoleName);
+                    break;
+                case "Role_desc":
+                    usersQuery = usersQuery.OrderByDescending(u => u.UserRole.RoleName);
+                    break;
+                default:
+                    usersQuery = usersQuery.OrderBy(u => u.FirstName).ThenBy(u => u.LastName); // Default
+                    break;
+            }
+
+            const int pageSize = 10;
+            if (pg < 1) pg = 1;
+            int totalRecords = await usersQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            var users = await usersQuery
+                .Skip((pg - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.CurrentPage = pg;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalRecords;
+            ViewBag.ItemStart = totalRecords == 0 ? 0 : (pg - 1) * pageSize + 1;
+            ViewBag.ItemEnd = Math.Min(pg * pageSize, totalRecords);
+
+            return View(users);
         }
 
         // GET: Users/Details/5
@@ -94,6 +152,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
                 {
                     _context.Update(user);
                     await _context.SaveChangesAsync();
+                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -143,6 +202,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             }
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
             return RedirectToAction(nameof(Index));
         }
 

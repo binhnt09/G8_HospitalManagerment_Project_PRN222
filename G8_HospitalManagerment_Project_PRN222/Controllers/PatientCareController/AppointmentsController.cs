@@ -58,7 +58,7 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCareControlle
         switch (sortOrder)
         {
             case "date_desc":
-                appointments = appointments.OrderByDescending(a => a.AppointmentDate);
+                appointments = appointments.OrderByDescending(a => a.AppointmentId);
                 break;
             case "doctor_asc":
                 appointments = appointments.OrderBy(a => a.Doctor.Employee.User.FirstName).ThenBy(a => a.Doctor.Employee.User.LastName);
