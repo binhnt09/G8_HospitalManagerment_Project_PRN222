@@ -62,7 +62,7 @@
         @* Hidden fields *@
         <input type="hidden" asp-for="AppointmentId" />
         <input type="hidden" asp-for="PatientId" />
-        <input type="hidden" asp-for="DoctorId" />
+        @* <input type="hidden" asp-for="DoctorId" /> *@
         <input type="hidden" asp-for="PatientName" />
         <input type="hidden" asp-for="DoctorName" />
         <input type="hidden" asp-for="AppointmentDate" />
@@ -79,6 +79,14 @@
                         </h5>
                         
                         <div class="row g-3">
+                            @* --- THÊM PHẦN CHỌN BÁC SĨ VÀO ĐÂY --- *@
+                            <div class="col-12">
+                                <label asp-for="DoctorId" class="form-label fw-semibold">Bác sĩ phụ trách</label>
+                                <select asp-for="DoctorId" class="form-select border-primary bg-light" asp-items="Model.AvailableDoctors">
+                                    <option value="">-- Chọn bác sĩ --</option>
+                                </select>
+                                <span asp-validation-for="DoctorId" class="text-danger small"></span>
+                            </div>
                             @* Symptoms *@
                             <div class="col-12">
                                 <label asp-for="Symptoms" class="form-label fw-semibold"></label>
