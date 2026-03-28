@@ -25,7 +25,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.AuthenticationContro
             _context = context;
         }
 
-        // GET: Users
+        // GET: Users[
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var dbHospitalManagementContext = _context.Users.Include(u => u.UserRole);
