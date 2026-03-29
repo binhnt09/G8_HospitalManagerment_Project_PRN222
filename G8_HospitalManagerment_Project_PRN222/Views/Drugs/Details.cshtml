@@ -1,72 +1,95 @@
-﻿@model G8_HospitalManagerment_Project_PRN222.Models.Drug
+@model G8_HospitalManagerment_Project_PRN222.Models.Drug
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết Thuốc";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<h1>Details</h1>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-light rounded-circle shadow-sm me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="bi bi-arrow-left text-dark"></i>
+        </a>
+        <h3 class="mb-0 fw-bold text-dark">Chi tiết Thuốc</h3>
+    </div>
 
-<div>
-    <h4>Drug</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DrugName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DrugName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Unit)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Unit)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StockQuantity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StockQuantity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DeletedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DeletedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsDeleted)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsDeleted)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.DrugId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="card shadow-sm border-0 rounded-4 mx-auto" style="max-width: 900px;">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px; background-color: #e8f0fe;">
+                    <i class="bi bi-capsule fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark">@Model.DrugName</h4>
+                    <span class="text-muted">Mã thuốc: <strong>@Model.DrugId</strong></span>
+                </div>
+                
+                <div class="ms-auto text-end">
+                    <span class="fs-4 fw-bold text-success">@(Model.Price?.ToString("N0") ?? "0") ₫</span>
+                    <span class="text-muted d-block small">/ @(Model.Unit ?? "Đơn vị")</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-4">
+            <hr class="mb-4" />
+            
+            <div class="row g-4 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <p class="text-muted small mb-1 fw-medium"><i class="bi bi-box-seam me-1"></i> Trạng thái Kho</p>
+                        @if (Model.StockQuantity > 10)
+                        {
+                            <span class="badge bg-success fs-6 rounded-pill px-3">Còn @Model.StockQuantity</span>
+                        }
+                        else if (Model.StockQuantity > 0)
+                        {
+                            <span class="badge bg-warning text-dark fs-6 rounded-pill px-3">Sắp hết (@Model.StockQuantity)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger fs-6 rounded-pill px-3">Hết hàng</span>
+                        }
+                    </div>
+                </div>
+                
+                <div class="col-sm-6 col-md-4">
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <p class="text-muted small mb-1 fw-medium"><i class="bi bi-tag me-1"></i> Phân loại/Đơn vị</p>
+                        <p class="fw-bold text-dark mb-0 fs-5">@(Model.Unit ?? "N/A")</p>
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-md-4">
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <p class="text-muted small mb-1 fw-medium"><i class="bi bi-clock-history me-1"></i> Ngày nhận</p>
+                        <p class="fw-medium text-dark mb-0 fs-6">@(Model.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle me-2"></i>Mô tả & Hướng dẫn sử dụng</h6>
+                <div class="p-4 bg-light rounded-3 text-dark border-start border-4 border-primary" style="white-space: pre-line;">@(string.IsNullOrEmpty(Model.Description) ? "Chưa có thông tin mô tả hoặc hướng dẫn sử dụng cho loại thuốc này." : Model.Description)</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top flex-wrap gap-3">
+                <div class="text-muted small">
+                    <p class="mb-0">Cập nhật lần cuối: <strong>@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</strong></p>
+                    @if(Model.IsDeleted == true) {
+                        <p class="mb-0 text-danger mt-1"><i class="bi bi-exclamation-triangle"></i> Đã ngừng kinh doanh từ @(Model.DeletedAt?.ToString("dd/MM/yyyy") ?? "")</p>
+                    }
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model?.DrugId" class="btn btn-warning px-4 rounded-pill fw-medium d-flex align-items-center text-dark">
+                        <i class="bi bi-pencil-square me-2"></i> Chỉnh sửa
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model?.DrugId" class="btn btn-outline-danger px-4 rounded-pill fw-medium d-flex align-items-center">
+                        <i class="bi bi-trash3 me-2"></i> Xóa
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

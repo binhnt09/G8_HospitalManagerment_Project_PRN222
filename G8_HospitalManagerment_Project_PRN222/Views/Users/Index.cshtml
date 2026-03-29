@@ -1,102 +1,167 @@
-﻿@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.User>
+@model IEnumerable<G8_HospitalManagerment_Project_PRN222.Models.User>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Quản lý Người dùng";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
 }
 
-<h1>Index</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FirstName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LastName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Phone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Gender)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BirthDay)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Address)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DeletedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsDeleted)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserRole)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Phone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Gender)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.BirthDay)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Address)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeletedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsDeleted)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UserRole.UserRoleId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.UserId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.UserId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.UserId">Delete</a>
-            </td>
-        </tr>
+<div class="container-fluid py-4" style="background-color: #F8F9FA; min-height: 100vh;">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        
+        <form id="searchForm" asp-action="Index" method="get" class="d-flex flex-grow-1" style="max-width: 450px;">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
+                <span class="input-group-text bg-transparent border-0 text-muted ps-4">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="searchString" value="@ViewBag.CurrentFilter" class="form-control border-0 shadow-none bg-transparent" placeholder="Tìm tên, email, SDT..." aria-label="Search">
+                <button class="btn btn-primary rounded-pill m-1 px-4 fw-medium" type="submit">Tìm</button>
+            </div>
+            <input type="hidden" name="sortOrder" value="@ViewBag.CurrentSort" />
+        </form>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="dropdown shadow-sm rounded-pill">
+                <button class="btn btn-white bg-white border-0 rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium text-dark" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-sort-down text-primary"></i> Sắp xếp
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2">
+                    <li><a class="dropdown-item py-2 ajax-link" asp-action="Index" asp-route-sortOrder="@ViewBag.NameSortParm" asp-route-searchString="@ViewBag.CurrentFilter">Tên</a></li>
+                    <li><a class="dropdown-item py-2 ajax-link" asp-action="Index" asp-route-sortOrder="@ViewBag.EmailSortParm" asp-route-searchString="@ViewBag.CurrentFilter">Email</a></li>
+                    <li><a class="dropdown-item py-2 ajax-link" asp-action="Index" asp-route-sortOrder="@ViewBag.RoleSortParm" asp-route-searchString="@ViewBag.CurrentFilter">Vai trò</a></li>
+                </ul>
+            </div>
+            
+            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 py-2 d-flex align-items-center gap-2 fw-medium shadow-sm">
+                <i class="bi bi-plus-lg"></i> Thêm Người dùng
+            </a>
+        </div>
+    </div>
+
+    <div id="user-grid-container" style="transition: all 0.3s ease;">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                        <thead class="text-muted" style="background-color: #FAFAFA; font-size: 0.85rem; text-transform: uppercase;">
+                            <tr>
+                                <th class="ps-4 py-3 border-bottom-0 fw-semibold">ID</th>
+                                <th class="py-3 border-bottom-0 fw-semibold">Họ và Tên</th>
+                                <th class="py-3 border-bottom-0 fw-semibold">Email</th>
+                                <th class="py-3 border-bottom-0 fw-semibold">Phân quyền</th>
+                                <th class="pe-4 py-3 border-bottom-0 fw-semibold text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            @if(Model == null || !Model.Any())
+                            {
+                                <tr><td colspan="5" class="text-center py-5 text-muted">Không tìm thấy người dùng nào.</td></tr>
+                            }
+                            @foreach (var item in Model) {
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="fw-bold text-dark">@item.UserId</div>
+                                    </td>
+                                    
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark">@(item.FirstName ?? "") @(item.LastName ?? "")</div>
+                                        <div class="text-muted small">@item.Phone</div>
+                                    </td>
+
+                                    <td class="py-3">
+                                        <div class="text-dark">@(item.Email ?? "N/A")</div>
+                                    </td>
+
+                                    <td class="py-3">
+                                        @if (item.UserRole?.RoleName == "Admin" || item.UserRole?.RoleName == "Director")
+                                        {
+                                            <span class="badge bg-danger rounded-pill px-3">@item.UserRole?.RoleName</span>
+                                        }
+                                        else if (item.UserRole?.RoleName == "Doctor" || item.UserRole?.RoleName == "Nurse")
+                                        {
+                                            <span class="badge bg-info text-dark rounded-pill px-3">@item.UserRole?.RoleName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3">@(item.UserRole?.RoleName ?? "N/A")</span>
+                                        }
+                                    </td>
+
+                                    <td class="pe-4 py-3 text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a asp-action="Details" asp-route-id="@item.UserId" class="btn btn-sm btn-light text-muted p-2 rounded-circle" title="Xem chi tiết"><i class="bi bi-eye"></i></a>
+                                            <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-light text-primary p-2 rounded-circle" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></a>
+                                            <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-light text-danger p-2 rounded-circle" title="Xóa"><i class="bi bi-trash3"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center p-4 border-top">
+                    <div class="text-muted small mb-3 mb-md-0">
+                        Hiển thị <span class="fw-bold text-dark">@ViewBag.ItemStart</span> - <span class="fw-bold text-dark">@ViewBag.ItemEnd</span> trong tổng số <span class="fw-bold text-dark">@ViewBag.TotalItems</span> hồ sơ
+                    </div>
+                    
+                    @if (totalPages > 1)
+                    {
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link rounded-pill border-0 text-muted px-3 ajax-link" asp-action="Index" asp-route-pg="@(currentPage - 1)" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter"><i class="bi bi-chevron-left me-1"></i> Trước</a>
+                            </li>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link rounded-circle border-0 mx-1 ajax-link @(i == currentPage ? "bg-primary text-white" : "text-dark")" asp-action="Index" asp-route-pg="@i" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                <a class="page-link rounded-pill border-0 text-muted px-3 ajax-link" asp-action="Index" asp-route-pg="@(currentPage + 1)" asp-route-sortOrder="@ViewBag.CurrentSort" asp-route-searchString="@ViewBag.CurrentFilter">Sau <i class="bi bi-chevron-right ms-1"></i></a>
+                            </li>
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function loadGridData(url) {
+                $('#user-grid-container').css('opacity', '0.4');
+                $('#user-grid-container').load(url + ' #user-grid-container > *', function (response, status, xhr) {
+                    if (status == "error") {
+                        alert("Lỗi tải dữ liệu. Vui lòng thử lại!");
+                    }
+                    $('#user-grid-container').css('opacity', '1');
+                });
+            }
+
+            $('#searchForm').on('submit', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('action') + '?' + $(this).serialize(); 
+                loadGridData(url);
+            });
+
+            $(document).on('click', '.ajax-link', function (e) {
+                e.preventDefault(); 
+                var url = $(this).attr('href');
+                
+                var searchVal = $('input[name="searchString"]').val();
+                if(searchVal && !url.includes('searchString=')) {
+                    url += (url.includes('?') ? '&' : '?') + 'searchString=' + encodeURIComponent(searchVal);
+                }
+                
+                loadGridData(url);
+            });
+        });
+    </script>
 }
-    </tbody>
-</table>

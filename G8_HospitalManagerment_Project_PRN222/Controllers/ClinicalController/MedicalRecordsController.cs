@@ -123,6 +123,14 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
             var availableImagingServices = await _context.Services
                 .Select(i => new SelectListItem { Value = i.ServiceId.ToString(), Text = i.ServiceName }).ToListAsync();
 
+            var availableDoctors = await _context.Doctors
+                .Include(d => d.Employee).ThenInclude(e => e.User)
+                .Select(d => new SelectListItem
+                {
+                    Value = d.DoctorId.ToString(),
+                    Text = $"BS. {d.Employee.User.FirstName} {d.Employee.User.LastName}"
+                }).ToListAsync();
+
             var vm = new Encounter1CreateViewModel
             {
                 AppointmentId = appointmentId,
@@ -133,7 +141,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 DoctorName = doctor?.Employee?.User != null ? $"{doctor.Employee.User.FirstName} {doctor.Employee.User.LastName}" : $"Doctor #{doctorId}",
 
                 AvailableLabTests = availableLabTests, // 2. TRUYỀN DỮ LIỆU XUỐNG VIEWMODEL ĐỂ HIỂN THỊ CHECKBOX
-                AvailableImagingServices = availableImagingServices
+                AvailableImagingServices = availableImagingServices,
+                AvailableDoctors = availableDoctors
             };
             return View(vm);
         }
@@ -143,7 +152,11 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
         public async Task<IActionResult> Create(Encounter1CreateViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                model.AvailableDoctors = await _context.Doctors.Include(d => d.Employee).ThenInclude(e => e.User)
+                .Select(d => new SelectListItem { Value = d.DoctorId.ToString(), Text = $"BS. {d.Employee.User.FirstName} {d.Employee.User.LastName}" }).ToListAsync();
                 return View(model);
+            }
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -248,6 +261,8 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.ClinicalController
                 // Nếu lỗi, phải load lại danh sách Checkbox trả về cho View
                 model.AvailableLabTests = await _context.Tests.Select(t => new SelectListItem { Value = t.TestId.ToString(), Text = t.TestName }).ToListAsync();
                 model.AvailableImagingServices = await _context.Services.Select(i => new SelectListItem { Value = i.ServiceId.ToString(), Text = i.ServiceName }).ToListAsync();
+                model.AvailableDoctors = await _context.Doctors.Include(d => d.Employee).ThenInclude(e => e.User)
+                    .Select(d => new SelectListItem { Value = d.DoctorId.ToString(), Text = $"BS. {d.Employee.User.FirstName} {d.Employee.User.LastName}" }).ToListAsync();
                 return View(model);
             }
         }

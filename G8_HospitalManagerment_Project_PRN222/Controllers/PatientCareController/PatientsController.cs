@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using G8_HospitalManagerment_Project_PRN222.Models;
 using Microsoft.AspNetCore.SignalR;
 using G8_HospitalManagerment_Project_PRN222.Hubs;
+using ClosedXML.Excel;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
 {
@@ -220,14 +223,277 @@ namespace G8_HospitalManagerment_Project_PRN222.Controllers.PatientCare
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 1. Tìm bệnh nhân
             var patient = await _context.Patients.FindAsync(id);
-            if (patient != null)
+            if (patient == null)
             {
-                _context.Patients.Remove(patient);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+            // 2. KIỂM TRA ĐIỀU KIỆN CHẶN XÓA
+            // Chỉ chặn khi đã phát sinh Hồ sơ khám bệnh hoặc Hóa đơn.
+            bool hasMedicalHistory = await _context.MedicalRecords.AnyAsync(m => m.PatientId == id);
+            bool hasInvoices = await _context.Invoices.AnyAsync(i => i.PatientId == id);
+
+            if (hasMedicalHistory || hasInvoices)
+            {
+                TempData["Error"] = "Không thể xóa bệnh nhân này vì đã có Hồ sơ bệnh án hoặc Hóa đơn phát sinh!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 3. NẾU THỎA MÃN ĐIỀU KIỆN XÓA
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Bước 3.1: Dọn dẹp các Lịch hẹn (Appointments) chưa khám của bệnh nhân này
+                // (Để tránh lỗi Foreign Key Constraint trong Database)
+                var pendingAppointments = await _context.Appointments
+                                                .Where(a => a.PatientId == id)
+                                                .ToListAsync();
+                if (pendingAppointments.Any())
+                {
+                    _context.Appointments.RemoveRange(pendingAppointments);
+                }
+
+                // Bước 3.2: Xóa bệnh nhân (hoặc soft-delete tùy logic thiết kế của bạn)
+                _context.Patients.Remove(patient);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "Xóa bệnh nhân và các lịch hẹn (nếu có) thành công.";
+
+                // Phát tín hiệu SignalR để cập nhật các màn hình khác (Ví dụ: màn Lễ tân, Bác sĩ)
+                if (_hubContext != null)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                // In ra ex.Message để lúc dev dễ fix bug, lúc release có thể ẩn đi
+                TempData["Error"] = $"Có lỗi xảy ra khi xóa trong Database: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Patients/Delete/5
+        //[HttpPost, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> DeleteConfirmed1(int id)
+        //{
+        //    // 1. Tìm bệnh nhân
+        //    var patient = await _context.Patients.FindAsync(id);
+        //    if (patient == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    // 2. KIỂM TRA ĐIỀU KIỆN CHẶN XÓA
+        //    bool hasMedicalHistory = await _context.MedicalRecords.AnyAsync(m => m.PatientId == id);
+        //    bool hasInvoices = await _context.Invoices.AnyAsync(i => i.PatientId == id);
+
+        //    // THÊM MỚI: Kiểm tra xem có Lịch hẹn nào đang ở trạng thái KHÁC "Pending" và "Cancelled" không?
+        //    // (Ví dụ có lịch đang "Confirmed" hoặc "Completed" thì gán biến này = true)
+        //    bool hasActiveAppointments = await _context.Appointments
+        //        .AnyAsync(a => a.PatientId == id && a.Status != "Pending" && a.Status != "Cancelled");
+
+        //    // Nếu dính 1 trong 3 điều kiện trên -> Chặn xóa
+        //    if (hasMedicalHistory || hasInvoices || hasActiveAppointments)
+        //    {
+        //        TempData["Error"] = "Không thể xóa Bệnh nhân này vì đang có lịch hẹn đã được xác nhận, hoặc đã có Hồ sơ khám/Hóa đơn!";
+        //        return RedirectToAction(nameof(Index));
+        //    }
+
+        //    // 3. NẾU THỎA MÃN ĐIỀU KIỆN XÓA (Chỉ có lịch hẹn Pending/Cancelled hoặc không có gì)
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        // Bước 3.1: Dọn dẹp các Lịch hẹn Pending/Cancelled của bệnh nhân này để tránh lỗi khóa ngoại
+        //        var appointmentsToDelete = await _context.Appointments
+        //                                        .Where(a => a.PatientId == id)
+        //                                        .ToListAsync();
+        //        if (appointmentsToDelete.Any())
+        //        {
+        //            _context.Appointments.RemoveRange(appointmentsToDelete);
+        //        }
+
+        //        // Bước 3.2: Xóa bệnh nhân
+        //        _context.Patients.Remove(patient);
+
+        //        await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+
+        //        TempData["Success"] = "Xóa bệnh nhân và các lịch hẹn (chờ/đã hủy) thành công.";
+
+        //        // Phát tín hiệu SignalR 
+        //        if (_hubContext != null)
+        //        {
+        //            await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        TempData["Error"] = $"Có lỗi xảy ra khi xóa trong Database: {ex.Message}";
+        //    }
+
+        //    return RedirectToAction(nameof(Index));
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var patients = await _context.Patients
+                .Include(p => p.User)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Patients");
+                var currentRow = 1;
+
+                // Headers
+                worksheet.Cell(currentRow, 1).Value = "Mã BN";
+                worksheet.Cell(currentRow, 2).Value = "Họ";
+                worksheet.Cell(currentRow, 3).Value = "Tên";
+                worksheet.Cell(currentRow, 4).Value = "Email";
+                worksheet.Cell(currentRow, 5).Value = "SĐT";
+                worksheet.Cell(currentRow, 6).Value = "Giới tính";
+                worksheet.Cell(currentRow, 7).Value = "Ngày sinh";
+                worksheet.Cell(currentRow, 8).Value = "Địa chỉ";
+                worksheet.Cell(currentRow, 9).Value = "Nhóm máu";
+                worksheet.Cell(currentRow, 10).Value = "Dị ứng";
+                worksheet.Cell(currentRow, 11).Value = "Số BHYT";
+
+                // Format headers
+                var headerRange = worksheet.Range(currentRow, 1, currentRow, 11);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                foreach (var patient in patients)
+                {
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Value = patient.PatientId;
+                    worksheet.Cell(currentRow, 2).Value = patient.User?.FirstName;
+                    worksheet.Cell(currentRow, 3).Value = patient.User?.LastName;
+                    worksheet.Cell(currentRow, 4).Value = patient.User?.Email;
+                    worksheet.Cell(currentRow, 5).Value = patient.User?.Phone;
+                    worksheet.Cell(currentRow, 6).Value = patient.User?.Gender;
+                    worksheet.Cell(currentRow, 7).Value = patient.User?.BirthDay?.ToString("yyyy-MM-dd");
+                    worksheet.Cell(currentRow, 8).Value = patient.User?.Address;
+                    worksheet.Cell(currentRow, 9).Value = patient.BloodType;
+                    worksheet.Cell(currentRow, 10).Value = patient.Allergies;
+                    worksheet.Cell(currentRow, 11).Value = patient.InsuranceNumber;
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"DanhSachBenhNhan_{DateTime.Now:yyyyMMdd}.xlsx");
+                }
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file Excel.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                // Get the Patient role id
+                var patientRole = await _context.UserRoles.FirstOrDefaultAsync(r => r.RoleName == "Patient");
+                int roleId = patientRole?.UserRoleId ?? 2; // Assuming 2 as fallback or another appropriate default ID
+
+                using (var stream = new MemoryStream())
+                {
+                    await file.CopyToAsync(stream);
+                    using (var workbook = new XLWorkbook(stream))
+                    {
+                        var worksheet = workbook.Worksheet(1);
+                        var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Skip header row
+
+                        foreach (var row in rows)
+                        {
+                            var firstName = row.Cell(2).GetString()?.Trim();
+                            var lastName = row.Cell(3).GetString()?.Trim();
+                            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName)) continue;
+
+                            var email = row.Cell(4).GetString()?.Trim();
+                            var phone = row.Cell(5).GetString()?.Trim();
+                            var gender = row.Cell(6).GetString()?.Trim();
+                            
+                            DateTime? birthDay = null;
+                            if (DateTime.TryParse(row.Cell(7).GetString()?.Trim(), out var pDate)) birthDay = pDate;
+                            
+                            var address = row.Cell(8).GetString()?.Trim();
+                            var bloodType = row.Cell(9).GetString()?.Trim();
+                            var allergies = row.Cell(10).GetString()?.Trim();
+                            var insurance = row.Cell(11).GetString()?.Trim();
+
+                            User matchingUser = null;
+                            if (!string.IsNullOrEmpty(email))
+                                matchingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                            if (matchingUser == null && !string.IsNullOrEmpty(phone))
+                                matchingUser = await _context.Users.FirstOrDefaultAsync(u => u.Phone == phone);
+
+                            if (matchingUser == null)
+                            {
+                                // Create new User
+                                matchingUser = new User
+                                {
+                                    FirstName = firstName,
+                                    LastName = lastName,
+                                    Email = email,
+                                    Phone = phone,
+                                    Gender = gender,
+                                    BirthDay = birthDay,
+                                    Address = address,
+                                    UserRoleId = roleId,
+                                    CreatedAt = DateTime.Now
+                                };
+                                _context.Users.Add(matchingUser);
+                                await _context.SaveChangesAsync(); // save immediately to get UserId
+                            }
+
+                            // Check if this user is already a patient
+                            var existingPatient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == matchingUser.UserId);
+                            if (existingPatient == null)
+                            {
+                                var newPatient = new Patient
+                                {
+                                    UserId = matchingUser.UserId,
+                                    BloodType = bloodType,
+                                    Allergies = allergies,
+                                    InsuranceNumber = insurance,
+                                    CreatedAt = DateTime.Now
+                                };
+                                _context.Patients.Add(newPatient);
+                            }
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveDataChange");
+                TempData["Success"] = "Nhập dữ liệu bệnh nhân thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi nhập dữ liệu: " + ex.Message;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

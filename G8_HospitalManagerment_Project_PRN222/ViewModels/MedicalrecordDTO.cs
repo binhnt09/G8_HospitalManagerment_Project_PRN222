@@ -31,6 +31,7 @@ namespace G8_HospitalManagerment_Project_PRN222.ViewModels
         // Danh sách để render Checkbox/Select2 trên UI
         public List<SelectListItem> AvailableLabTests { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> AvailableImagingServices { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem>? AvailableDoctors { get; set; }
     }
 
     // ==========================================
